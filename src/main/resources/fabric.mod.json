@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "id": "kaizzinhobattleslider",
+  "version": "${version}",
+  "name": "Cobblemon Battle Slider",
+  "description": "Pokémon-style VS battle slider animation for Cobblemon",
+  "authors": ["Kaizzinho"],
+  "contact": {},
+  "license": "All-Rights-Reserved",
+  "icon": "assets/battleslider/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "fabric-datagen": [
+      "com.kaizzinho.battleslider.client.BattlesliderDataGenerator"
+    ],
+    "client": [
+      "com.kaizzinho.battleslider.client.BattlesliderClient"
+    ],
+    "main": [
+      "com.kaizzinho.battleslider.Battleslider"
+    ]
+  },
+  "mixins": [
+    "battleslider.mixins.json",
+    {
+      "config": "battleslider.client.mixins.json",
+      "environment": "client"
+    }
+  ],
+  "depends": {
+    "fabricloader": ">=0.16.0",
+    "fabric-api": "*",
+    "fabric-language-kotlin": "*",
+    "cobblemon": "*",
+    "minecraft": "~1.21.1"
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.kaizzinho.battleslider.mixin.client",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "BattleInitializeHandlerMixin",
+    "BattleSetTeamPokemonHandlerMixin",
+    "BattleQueueRequestHandlerMixin",
+    "BattleSwitchPokemonHandlerMixin",
+    "BattleReplacePokemonHandlerMixin",
+    "BattleMakeChoiceHandlerMixin",
+    "BattleChallengeNotificationHandlerMixin",
+    "BattleMessageHandlerMixin",
+    "SpawnExtraDataEntityHandlerMixin",
+    "PartyOverlayMixin",
+    "BattleOverlayMixin",
+    "BattleGUIMixin",
+    "EntityRendererMixin",
+    "PlayPosableAnimationHandlerMixin",
+    "PlaySoundS2CPacketMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "overwrites": {
+    "requireAnnotations": true
+  }
+}
