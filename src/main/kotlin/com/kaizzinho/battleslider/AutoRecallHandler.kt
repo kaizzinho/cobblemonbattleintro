@@ -4,37 +4,32 @@ import com.cobblemon.mod.common.api.battles.model.actor.BattleActor
 import com.cobblemon.mod.common.api.events.CobblemonEvents
 
 /**
- * Common (not client-only) module -- this runs server-side too, which is
- * required since recalling a Pokemon is server-authoritative game state.
+ * Server-side cleanup for Pokémon that are already active in the world when a
+ * trainer or PvP battle begins.
  *
- * Hooks BATTLE_STARTED_PRE (fires before the battle's own send-out packet
- * sequence begins) and force-recalls any Pokemon that's already actively
- * spawned in the world for either participant (e.g. a companion Pokemon
- * walking beside its trainer) -- so every battle start goes through a clean
- * recall-then-send-out cycle, guaranteeing the throw animation always has
- * something to actually throw.
+ * BATTLE_STARTED_PRE is already late enough for Cobblemon to associate active
+ * Pokémon with the incoming battle. Because of that, checking entity.battleId
+ * can incorrectly reject the exact wandering companion we need to recall.
  *
- * Safety check: only recalls entities whose battleId is still null. A
- * Pokemon that's genuinely about to be sent INTO this battle would already
- * have its battleId set by the time this fires (if that assumption turns
- * out to be wrong in practice, this is the one guard to revisit).
- *
- * Register this from your common (not client-only) mod initializer, e.g.
- * inside Battleslider.kt's onInitialize().
+ * Any party Pokémon that still has an active entity at this point is recalled.
+ * Pokémon that are already inactive are left untouched.
  */
 object AutoRecallHandler {
 
     fun register() {
         CobblemonEvents.BATTLE_STARTED_PRE.subscribe { event ->
-            event.battle.actors.forEach { actor -> recallStrayPokemon(actor) }
+            event.battle.actors.forEach(::recallActivePokemon)
         }
     }
 
-    private fun recallStrayPokemon(actor: BattleActor) {
+    private fun recallActivePokemon(actor: BattleActor) {
         actor.pokemonList.forEach { battlePokemon ->
             val pokemon = battlePokemon.effectedPokemon
-            val entity = pokemon.entity
-            if (entity != null && entity.battleId == null) {
+
+            // Pokemon.entity is only non-null while its state is active in-world.
+            // Do not gate this on entity.battleId: Cobblemon may have assigned the
+            // incoming battle ID before this PRE subscriber is invoked.
+            if (pokemon.entity != null) {
                 pokemon.recall()
             }
         }

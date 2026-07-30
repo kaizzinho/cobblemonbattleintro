@@ -55,7 +55,9 @@ object TrainerSkinRenderer {
         entity: LivingEntity
     ) {
         val texture = skinId ?: resolveTexture(entity) ?: return
-        val slim = (entity as? AbstractClientPlayerEntity)?.skinTextures?.model == SkinTextures.Model.SLIM
+        val slim = (entity as? AbstractClientPlayerEntity)
+            ?.skinTextures
+            ?.model == SkinTextures.Model.SLIM
 
         val barH = barBottom - barTop
         val halfW = (barH * 0.9f).toInt()
@@ -66,8 +68,8 @@ object TrainerSkinRenderer {
         val bodyW = 8
         val bodyH = 12
         val armW = if (slim) 3 else 4
-        val contentH = headSize + bodyH               // 20
-        val contentW = armW + bodyW + armW             // 16 (wide) or 14 (slim)
+        val contentH = headSize + bodyH
+        val contentW = armW + bodyW + armW
 
         // One number to change if the portrait reads too big/small relative
         // to the bar.
@@ -87,18 +89,25 @@ object TrainerSkinRenderer {
         val headX = bodyX + (bodyWPx - headPx) / 2
         val headY = startY.toInt()
         val bodyY = headY + headPx
-        val rightArmX = startX.toInt()
+
+        /*
+         * Important: derive both arm positions from the already-rounded body
+         * rectangle. Previously the screen-left arm used startX.toInt()
+         * independently, while bodyX used a different floating-point sum.
+         * Those separate truncations could create a one-pixel gap.
+         */
+        val rightArmX = bodyX - armWPx
         val leftArmX = bodyX + bodyWPx
 
         // Right leg / left leg omitted deliberately -- a bust portrait
         // (head + torso + arms) matches the classic VS-screen framing
         // better than a full body crammed into a short bar.
 
-        // Right arm (base + sleeve overlay)
+        // Screen-left / skin right arm (base + sleeve overlay)
         blit(drawContext, texture, rightArmX, bodyY, armWPx, bodyHPx, 44f, 20f, armW, bodyH)
         blit(drawContext, texture, rightArmX, bodyY, armWPx, bodyHPx, 44f, 36f, armW, bodyH)
 
-        // Left arm (base + sleeve overlay)
+        // Screen-right / skin left arm (base + sleeve overlay)
         blit(drawContext, texture, leftArmX, bodyY, armWPx, bodyHPx, 36f, 52f, armW, bodyH)
         blit(drawContext, texture, leftArmX, bodyY, armWPx, bodyHPx, 52f, 52f, armW, bodyH)
 
@@ -116,8 +125,14 @@ object TrainerSkinRenderer {
     private fun blit(
         ctx: DrawContext,
         texture: Identifier,
-        x: Int, y: Int, w: Int, h: Int,
-        u: Float, v: Float, regionW: Int, regionH: Int
+        x: Int,
+        y: Int,
+        w: Int,
+        h: Int,
+        u: Float,
+        v: Float,
+        regionW: Int,
+        regionH: Int
     ) {
         ctx.drawTexture(texture, x, y, w, h, u, v, regionW, regionH, 64, 64)
     }
@@ -127,7 +142,8 @@ object TrainerSkinRenderer {
     private fun resolveTexture(entity: LivingEntity): Identifier? {
         return try {
             val client = MinecraftClient.getInstance()
-            val renderer = client.entityRenderDispatcher.getRenderer(entity) as? EntityRenderer<LivingEntity>
+            val renderer = client.entityRenderDispatcher
+                .getRenderer(entity) as? EntityRenderer<LivingEntity>
             renderer?.getTexture(entity)
         } catch (_: Exception) {
             null

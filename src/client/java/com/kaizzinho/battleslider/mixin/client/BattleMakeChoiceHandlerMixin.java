@@ -14,11 +14,12 @@ public abstract class BattleMakeChoiceHandlerMixin {
 
     @Inject(method = "handle", at = @At("HEAD"), cancellable = true)
     private void onHandle(BattleMakeChoicePacket packet, MinecraftClient client, CallbackInfo ci) {
-        System.out.println("[Battleslider] Intercepted " + packet.getClass().getSimpleName() + ", animating=" + BattleIntroOverlay.INSTANCE.isAnimating());
         if (!BattleIntroOverlay.INSTANCE.isAnimating()) return;
+
         ci.cancel();
-        BattleIntroOverlay.INSTANCE.addPendingPacket(() ->
-            client.execute(() -> BattleMakeChoiceHandler.INSTANCE.handle(packet, client))
+        BattleIntroOverlay.INSTANCE.addPendingCorePacket(
+            "BattleMakeChoicePacket",
+            () -> client.execute(() -> BattleMakeChoiceHandler.INSTANCE.handle(packet, client))
         );
     }
 }

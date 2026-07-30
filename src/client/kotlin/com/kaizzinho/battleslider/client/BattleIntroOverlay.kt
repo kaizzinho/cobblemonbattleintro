@@ -10,25 +10,47 @@ import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gui.DrawContext
 import net.minecraft.client.network.AbstractClientPlayerEntity
 import net.minecraft.entity.LivingEntity
+import net.minecraft.item.Item
+import net.minecraft.item.ItemStack
+import net.minecraft.registry.Registries
+import net.minecraft.sound.SoundEvent
+import net.minecraft.sound.SoundEvents
+import net.minecraft.client.sound.PositionedSoundInstance
 import net.minecraft.util.Identifier
 import com.cobblemon.mod.common.api.scheduling.afterOnClient
 import kotlin.math.pow
 import kotlin.math.sin
 import kotlin.random.Random
+import org.slf4j.LoggerFactory
+import com.kaizzinho.battleslider.client.config.BattleSliderConfig
 
 @Environment(EnvType.CLIENT)
 object BattleIntroOverlay {
 
+    private val LOGGER = LoggerFactory.getLogger("battleslider/BattleIntroOverlay")
+    private var registered = false
+
+    /**
+     * Detailed queue/timing diagnostics controlled by config/battleslider.json.
+     * Expensive message arguments are only constructed when debugging is active.
+     */
+    private fun debugLog(message: String, vararg args: Any?) {
+        if (BattleSliderConfig.debugLogging) {
+            LOGGER.info(message, *args)
+        }
+    }
+
     // ── State machine ─────────────────────────────────────────────────────────
-    // FLICKER: 3 black flicks, ramping in intensity, ending held at full black
+    // FLICKER: 7 black flicks, each reaching full black, final pulse held
     // BARS_SLIDE_IN: both bars slide in simultaneously (top L->R, bottom R->L)
     // VS_APPEAR: VS graphic pops in
     // CHARACTERS_SLIDE_IN: trainer portrait slides L->R, player portrait R->L
+    // TEAM_BALLS_SLIDE_IN: six party slots line up after both portraits settle
     // HOLD: everything held on screen
     // SLIDING_OUT: both bars exit together (unchanged mechanism from before --
     //   it reuses the same position formulas as slide-in, so it automatically
     //   reverses along whichever direction the bars now enter from)
-    enum class State { IDLE, FLICKER, BARS_SLIDE_IN, VS_APPEAR, CHARACTERS_SLIDE_IN, HOLD, SLIDING_OUT }
+    enum class State { IDLE, FLICKER, BARS_SLIDE_IN, VS_APPEAR, CHARACTERS_SLIDE_IN, TEAM_BALLS_SLIDE_IN, HOLD, SLIDING_OUT }
 
     var state = State.IDLE
     private var progress = 0f
@@ -38,7 +60,7 @@ object BattleIntroOverlay {
     // ── Timing ───────────────────────────────────────────────────────────────
     // Total elapsed time from trigger() to the cry actually sounding =
     //   FLICKER_TOTAL_MS + BARS_SLIDE_MS + VS_APPEAR_MS + CHARACTERS_SLIDE_MS
-    //   + HOLD_DURATION_MS + SLIDE_OUT_DURATION_MS + 1500 (cry delay in the mixin)
+    //   + TEAM_BALLS_SLIDE_MS + HOLD_DURATION_MS + SLIDE_OUT_DURATION_MS + 1500 (cry delay in the mixin)
     // With the defaults below that's ~11s total. This is intentionally on the
     // slow/generous side per your request to see the full timing -- HOLD is
     // the one knob with real slack once you know where your music lands.
@@ -47,32 +69,92 @@ object BattleIntroOverlay {
     private const val BARS_SLIDE_MS          = 1250L  // was 750ms + 0.5s
     private const val VS_APPEAR_MS           = 850L   // was 350ms + 0.5s
     private const val CHARACTERS_SLIDE_MS    = 1250L  // was 750ms + 0.5s
+    private const val TEAM_BALLS_SLIDE_MS     = 950L   // six staggered slots + one synchronized lineup sound
     private const val HOLD_DURATION_MS       = 2700L  // was 2200ms + 0.5s -- still the one to retune once you see the full thing
     private const val SLIDE_OUT_DURATION_MS  = 1200L  // was 700ms + 0.5s
 
     // ── Pending packet queues ───────────────────────────────────────────────
-    // Split by owner so we can stagger the replay: player's send-out plays
-    // out fully (including cry) before the opponent's begins, matching the
-    // classic "you send out, THEN they send out" game pacing.
-    private val pendingPlayerPackets = java.util.concurrent.ConcurrentLinkedQueue<() -> Unit>()
-    private val pendingOpponentPackets = java.util.concurrent.ConcurrentLinkedQueue<() -> Unit>()
+    // Split by owner so we can stagger the replay: the opponent's send-out
+    // plays fully first, then the local player's sequence begins.
+    private data class PendingAction(
+        val label: String,
+        val queuedAtMs: Long,
+        val action: () -> Unit
+    )
+
+    /**
+     * CORE packets initialize/update Cobblemon's battle model and GUI. They must
+     * always replay before either trainer's throw/spawn sequence.
+     *
+     * SIDE queues contain only throw sound, spawn and cry/animation actions.
+     */
+    private val pendingCorePackets = java.util.concurrent.ConcurrentLinkedQueue<PendingAction>()
+    private val pendingPlayerPackets = java.util.concurrent.ConcurrentLinkedQueue<PendingAction>()
+    private val pendingOpponentPackets = java.util.concurrent.ConcurrentLinkedQueue<PendingAction>()
+
+    private var introStartedAtMs = 0L
+    private var debugSequence = 0L
     // Maps a spawned Pokemon's vanilla entity ID -> whether it's the player's,
     // populated when we see its SpawnPokemonPacket (which carries ownerId).
     // The later cry packet (PlayPosableAnimationPacket) only has an entity ID,
     // no owner -- this lets us classify it correctly by looking the ID up.
     private val entityOwnership = mutableMapOf<Int, Boolean>()
 
-    // How long after the player's send-out queue starts before the opponent's
-    // begins. Player's own sequence (ball open + the 1.5s cry delay in
-    // PlayPosableAnimationHandlerMixin) takes roughly ~2s, so this leaves a
-    // comfortable gap for it to fully finish, cry included, first.
-    private const val OPPONENT_STAGGER_DELAY_S = 2.5f
+    // How long after the opponent's send-out queue starts before the local
+    // player's begins. The opponent's sequence (throw, beam and delayed cry)
+    // takes roughly two seconds, so this leaves a clean gap before our throw.
+    private const val PLAYER_STAGGER_DELAY_S = 2.5f
 
-    fun addPendingPlayerPacket(action: Runnable)   { pendingPlayerPackets.offer { action.run() } }
-    fun addPendingOpponentPacket(action: Runnable) { pendingOpponentPackets.offer { action.run() } }
-    // Fallback for anything that can't be classified by owner -- goes with the player's batch.
-    fun addPendingPacket(action: Runnable) { pendingPlayerPackets.offer { action.run() } }
-    fun setPendingBattlePacket(action: Runnable) { pendingPlayerPackets.offer { action.run() } }
+    private fun elapsedDebugMs(): Long =
+        if (introStartedAtMs == 0L) 0L else System.currentTimeMillis() - introStartedAtMs
+
+    private fun enqueue(
+        queueName: String,
+        queue: java.util.concurrent.ConcurrentLinkedQueue<PendingAction>,
+        label: String,
+        action: Runnable
+    ) {
+        val sequence = ++debugSequence
+        val decoratedLabel = "#$sequence $label"
+        val queuedAt = System.currentTimeMillis()
+        queue.offer(PendingAction(decoratedLabel, queuedAt) { action.run() })
+        debugLog(
+            "[t+{}ms] QUEUE {} <- {} | core={}, opponent={}, player={}, state={}",
+            elapsedDebugMs(),
+            queueName,
+            decoratedLabel,
+            pendingCorePackets.size,
+            pendingOpponentPackets.size,
+            pendingPlayerPackets.size,
+            state
+        )
+    }
+
+    fun addPendingCorePacket(label: String, action: Runnable) =
+        enqueue("CORE", pendingCorePackets, label, action)
+
+    fun addPendingPlayerPacket(label: String, action: Runnable) =
+        enqueue("PLAYER", pendingPlayerPackets, label, action)
+
+    fun addPendingOpponentPacket(label: String, action: Runnable) =
+        enqueue("OPPONENT", pendingOpponentPackets, label, action)
+
+    // Compatibility overloads while every mixin is migrated.
+    fun addPendingPlayerPacket(action: Runnable) =
+        addPendingPlayerPacket("unlabelled-player", action)
+
+    fun addPendingOpponentPacket(action: Runnable) =
+        addPendingOpponentPacket("unlabelled-opponent", action)
+
+    /**
+     * Generic battle packets are not player-owned. They are battle-model/GUI
+     * prerequisites and therefore belong to the CORE queue.
+     */
+    fun addPendingPacket(action: Runnable) =
+        addPendingCorePacket("unlabelled-core", action)
+
+    fun setPendingBattlePacket(action: Runnable) =
+        addPendingCorePacket("BattleInitializePacket", action)
 
     fun registerPokemonOwnership(entityId: Int, isPlayerOwned: Boolean) { entityOwnership[entityId] = isPlayerOwned }
     fun isPlayerOwnedEntity(entityId: Int): Boolean? = entityOwnership[entityId]
@@ -112,6 +194,15 @@ object BattleIntroOverlay {
     private var localPokemonUUIDs = emptySet<java.util.UUID>()
     private var opponentPokemonUUIDs = emptySet<java.util.UUID>()
 
+    // Six visual party slots per side. Occupied slots use the Pokémon's real
+    // caughtBall item; missing party members use the bundled gray empty sprite.
+    private var localBallStacks: List<ItemStack> = emptyList()
+    private var opponentBallStacks: List<ItemStack> = emptyList()
+
+    private val EMPTY_BALL_TEXTURE = Identifier.of("battleslider", "textures/gui/empty_party_ball.png")
+    private const val EMPTY_BALL_TEXTURE_SIZE = 16
+    private val TEAM_BALL_LINEUP_SOUND = Identifier.of("battleslider", "team_ball_lineup")
+
     private var topColorA: Int = 0  // dark end -- opponent bar, driven by RCT TrainerType.color() or PvP/default fallback
     private var topColorB: Int = 0  // light end
 
@@ -143,9 +234,16 @@ object BattleIntroOverlay {
 
     // ── Registration ──────────────────────────────────────────────────────────
     fun register() {
+        if (registered) {
+            LOGGER.debug("BattleIntroOverlay.register() ignored: already registered")
+            return
+        }
+        registered = true
+
         HudRenderCallback.EVENT.register { drawContext, tickCounter ->
             if (state != State.IDLE) render(drawContext, tickCounter.getTickDelta(true))
         }
+        LOGGER.info("Battle intro HUD renderer registered")
     }
 
     // ── Trigger ───────────────────────────────────────────────────────────────
@@ -164,6 +262,8 @@ object BattleIntroOverlay {
 
         localPokemonUUIDs = localActor.pokemonList.map { it.uuid }.toSet()
         opponentPokemonUUIDs = opponentActor.pokemonList.map { it.uuid }.toSet()
+        localBallStacks = localActor.pokemonList.take(6).map { resolveBallStack(it.effectedPokemon.caughtBall) }
+        opponentBallStacks = opponentActor.pokemonList.take(6).map { resolveBallStack(it.effectedPokemon.caughtBall) }
 
         // Resolve top-bar color from RCT TrainerType if available -- this is
         // where your per-tier (trainer/gym leader/E4/champion) colors come
@@ -176,9 +276,23 @@ object BattleIntroOverlay {
         seedParticles(topParticles)
         seedParticles(botParticles)
 
+        pendingCorePackets.clear()
+        pendingPlayerPackets.clear()
+        pendingOpponentPackets.clear()
+        entityOwnership.clear()
+        introStartedAtMs = System.currentTimeMillis()
+        debugSequence = 0L
+
         progress   = 0f
         lastTimeMs = 0L
         state      = State.FLICKER
+
+        debugLog(
+            "[t+0ms] INTRO START | localParty={}, opponentParty={}, state={}",
+            localPokemonUUIDs.size,
+            opponentPokemonUUIDs.size,
+            state
+        )
     }
 
     private fun resolveTopBarColor(oppEntity: LivingEntity?, isPvP: Boolean) {
@@ -237,6 +351,82 @@ object BattleIntroOverlay {
         return null
     }
 
+
+    /**
+     * Resolves a Cobblemon PokeBall to its registered item without locking this
+     * mod to one mapped accessor name. Cobblemon/addon versions have exposed the
+     * item through item(), getItem(), asItem(), an Item field, or an Identifier.
+     */
+    private fun resolveBallStack(ball: Any): ItemStack {
+        val fallback = ItemStack(Registries.ITEM.get(Identifier.of("cobblemon", "poke_ball")))
+
+        try {
+            val methodNames = listOf("item", "getItem", "asItem", "getItemStack", "itemStack")
+            for (name in methodNames) {
+                val method = ball.javaClass.methods.firstOrNull {
+                    it.name == name && it.parameterCount == 0
+                } ?: continue
+
+                when (val value = method.invoke(ball)) {
+                    is ItemStack -> return value.copy()
+                    is Item -> return ItemStack(value)
+                    is Identifier -> {
+                        val item = Registries.ITEM.get(value)
+                        if (item != null) return ItemStack(item)
+                    }
+                    is String -> {
+                        val id = Identifier.tryParse(value)
+                        if (id != null) return ItemStack(Registries.ITEM.get(id))
+                    }
+                }
+            }
+
+            for (field in ball.javaClass.declaredFields) {
+                field.isAccessible = true
+                when (val value = field.get(ball)) {
+                    is ItemStack -> return value.copy()
+                    is Item -> return ItemStack(value)
+                    is Identifier -> return ItemStack(Registries.ITEM.get(value))
+                    is String -> {
+                        val id = Identifier.tryParse(value)
+                        if (id != null) return ItemStack(Registries.ITEM.get(id))
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            LOGGER.warn("Could not resolve caught-ball item from {}: {}", ball.javaClass.name, e.message)
+        }
+
+        return fallback
+    }
+
+    /**
+     * Plays one of Minecraft's built-in UI sounds without requiring an
+     * additional bundled audio asset or sounds.json registration.
+     */
+    private fun playVanillaUiSound(sound: SoundEvent, pitch: Float = 1.0f) {
+        val client = MinecraftClient.getInstance()
+        try {
+            client.soundManager.play(
+                PositionedSoundInstance.master(sound, pitch)
+            )
+        } catch (e: Exception) {
+            LOGGER.warn("Could not play vanilla UI sound: {}", e.message)
+        }
+    }
+
+    private fun playTeamBallLineupSound() {
+        val client = MinecraftClient.getInstance()
+        try {
+            client.soundManager.play(
+                PositionedSoundInstance.master(SoundEvent.of(TEAM_BALL_LINEUP_SOUND), 1.0f)
+            )
+        } catch (e: Exception) {
+            // Missing .ogg is harmless while the user is still sourcing audio.
+            LOGGER.debug("Team-ball lineup sound unavailable: {}", e.message)
+        }
+    }
+
     // ── Main render ───────────────────────────────────────────────────────────
     private fun render(drawContext: DrawContext, tickDelta: Float) {
         val client = MinecraftClient.getInstance()
@@ -250,7 +440,11 @@ object BattleIntroOverlay {
         when (state) {
             State.FLICKER -> {
                 progress = (progress + elapsed.toFloat() / FLICKER_TOTAL_MS).coerceAtMost(1f)
-                if (progress >= 1f) { progress = 0f; state = State.BARS_SLIDE_IN }
+                if (progress >= 1f) {
+                    progress = 0f
+                    state = State.BARS_SLIDE_IN
+                    playVanillaUiSound(SoundEvents.UI_TOAST_IN)
+                }
             }
             State.BARS_SLIDE_IN -> {
                 progress = (progress + elapsed.toFloat() / BARS_SLIDE_MS).coerceAtMost(1f)
@@ -262,37 +456,28 @@ object BattleIntroOverlay {
             }
             State.CHARACTERS_SLIDE_IN -> {
                 progress = (progress + elapsed.toFloat() / CHARACTERS_SLIDE_MS).coerceAtMost(1f)
+                if (progress >= 1f) {
+                    progress = 0f
+                    state = State.TEAM_BALLS_SLIDE_IN
+                    playTeamBallLineupSound()
+                }
+            }
+            State.TEAM_BALLS_SLIDE_IN -> {
+                progress = (progress + elapsed.toFloat() / TEAM_BALLS_SLIDE_MS).coerceAtMost(1f)
                 if (progress >= 1f) { progress = 0f; state = State.HOLD }
             }
             State.HOLD -> {
                 progress = (progress + elapsed.toFloat() / HOLD_DURATION_MS).coerceAtMost(1f)
-                if (progress >= 1f) { progress = 1f; state = State.SLIDING_OUT }
+                if (progress >= 1f) {
+                    progress = 1f
+                    state = State.SLIDING_OUT
+                    playVanillaUiSound(SoundEvents.UI_TOAST_OUT)
+                }
             }
             State.SLIDING_OUT -> {
                 progress = (progress - elapsed.toFloat() / SLIDE_OUT_DURATION_MS).coerceAtLeast(0f)
                 if (progress <= 0f) {
-                    isFlushing = true
-                    var playerAction = pendingPlayerPackets.poll()
-                    while (playerAction != null) { playerAction.invoke(); playerAction = pendingPlayerPackets.poll() }
-                    isFlushing = false
-
-                    // Opponent's send-out is staggered to start after the
-                    // player's has had time to fully play out (including cry).
-                    val opponentBatch = ArrayList<() -> Unit>()
-                    var opponentAction = pendingOpponentPackets.poll()
-                    while (opponentAction != null) { opponentBatch.add(opponentAction); opponentAction = pendingOpponentPackets.poll() }
-                    if (opponentBatch.isNotEmpty()) {
-                        afterOnClient(OPPONENT_STAGGER_DELAY_S) {
-                            opponentBatch.forEach { it.invoke() }
-                        }
-                    }
-
-                    state = State.IDLE
-                    localSkinId = null; opponentSkinId = null
-                    localEntityRef = null; opponentEntityRef = null
-                    localPokemonUUIDs = emptySet(); opponentPokemonUUIDs = emptySet()
-                    topParticles.clear(); botParticles.clear()
-                    entityOwnership.clear()
+                    finishIntroAndFlushPackets()
                     return
                 }
             }
@@ -309,7 +494,10 @@ object BattleIntroOverlay {
         if (blackAlpha > 0) {
             drawContext.fill(0, 0, sw, sh, (blackAlpha shl 24))
         }
-        if (state == State.FLICKER) return   // nothing else to draw during the flicker
+        if (state == State.FLICKER) {
+            drawSkipPrompt(drawContext, sw, sh)
+            return
+        }
 
         // ── Bars progress -- BOTH bars now animate on ONE shared timeline,
         // simultaneously, in swapped directions (top enters from the left,
@@ -317,7 +505,7 @@ object BattleIntroOverlay {
         // formula, so the exit is automatically a mirror of the entry.
         val barsT = when (state) {
             State.BARS_SLIDE_IN -> easeOutCubic(progress)
-            State.VS_APPEAR, State.CHARACTERS_SLIDE_IN, State.HOLD -> 1f
+            State.VS_APPEAR, State.CHARACTERS_SLIDE_IN, State.TEAM_BALLS_SLIDE_IN, State.HOLD -> 1f
             State.SLIDING_OUT -> easeOutCubic(progress)
             else -> 0f
         }
@@ -357,7 +545,7 @@ object BattleIntroOverlay {
         // out partway through SLIDING_OUT (same threshold as before) ───────────
         val vsT = when (state) {
             State.VS_APPEAR -> easeOutCubic(progress)
-            State.CHARACTERS_SLIDE_IN, State.HOLD -> 1f
+            State.CHARACTERS_SLIDE_IN, State.TEAM_BALLS_SLIDE_IN, State.HOLD -> 1f
             State.SLIDING_OUT -> if (progress > 0.4f) 1f else 0f
             else -> 0f
         }
@@ -380,7 +568,7 @@ object BattleIntroOverlay {
         // spot while the bar disappears out from under them.
         val charT = when (state) {
             State.CHARACTERS_SLIDE_IN -> easeOutCubic(progress)
-            State.HOLD -> 1f
+            State.TEAM_BALLS_SLIDE_IN, State.HOLD -> 1f
             State.SLIDING_OUT -> barsT
             else -> 0f
         }
@@ -405,6 +593,153 @@ object BattleIntroOverlay {
                     plrX, botY, botY + barH, plrEntity)
             }
         }
+
+
+        // ── Party-ball rows ───────────────────────────────────────────────────
+        // This phase starts only after both portraits are fully settled. Each
+        // side always has six slots. Occupied slots render the actual caughtBall
+        // item; missing members use a gray inactive sprite.
+        val teamBallsT = when (state) {
+            State.TEAM_BALLS_SLIDE_IN -> progress
+            State.HOLD -> 1f
+            State.SLIDING_OUT -> 1f
+            else -> 0f
+        }
+        if (teamBallsT > 0f) {
+            drawTeamBalls(
+                ctx = drawContext,
+                stacks = opponentBallStacks,
+                isOpponent = true,
+                sw = sw,
+                barTop = topY,
+                barHeight = barH,
+                phaseProgress = teamBallsT,
+                exitProgress = if (state == State.SLIDING_OUT) barsT else 1f
+            )
+            drawTeamBalls(
+                ctx = drawContext,
+                stacks = localBallStacks,
+                isOpponent = false,
+                sw = sw,
+                barTop = botY,
+                barHeight = barH,
+                phaseProgress = teamBallsT,
+                exitProgress = if (state == State.SLIDING_OUT) barsT else 1f
+            )
+        }
+
+        if (state != State.SLIDING_OUT) {
+            drawSkipPrompt(drawContext, sw, sh)
+        }
+    }
+
+
+    private fun drawTeamBalls(
+        ctx: DrawContext,
+        stacks: List<ItemStack>,
+        isOpponent: Boolean,
+        sw: Int,
+        barTop: Int,
+        barHeight: Int,
+        phaseProgress: Float,
+        exitProgress: Float
+    ) {
+        // Both Minecraft item icons and the custom empty sprite are authored
+        // in a logical 16x16 GUI space. Keeping them native avoids fractional
+        // scaling artifacts and guarantees identical slot proportions.
+        val slotSize = 16
+        val gap = 5
+        val rowWidth = slotSize * 6 + gap * 5
+
+        // Party rows occupy the area opposite their trainer portrait:
+        // - Opponent portrait rests on the right, so its row settles on the left.
+        // - Player portrait rests on the left, so its row settles on the right.
+        //
+        // Keep both rows away from the center VS emblem and from the name badges.
+        val baseStart = if (isOpponent) {
+            // Left-side empty area: roughly 1/8 → 3/8 of the screen.
+            (sw * 3 / 8 - rowWidth).coerceAtLeast(24)
+        } else {
+            // Right-side empty area: roughly 5/8 → 7/8 of the screen.
+            (sw * 5 / 8).coerceAtMost(sw - rowWidth - 24)
+        }
+        val y = barTop + (barHeight - slotSize) / 2
+
+        for (slot in 0 until 6) {
+            // Opponent reveals left→right. Player mirrors it right→left.
+            val revealOrder = if (isOpponent) slot else 5 - slot
+            val staggerStart = revealOrder * 0.075f
+            val localT = ((phaseProgress - staggerStart) / (1f - 5f * 0.075f))
+                .coerceIn(0f, 1f)
+            if (localT <= 0f) continue
+
+            val eased = easeOutBack(localT)
+            val finalX = baseStart + slot * (slotSize + gap)
+            val introOffset = if (isOpponent) {
+                // Opponent row enters from the left and travels right.
+                -((1f - eased) * 72f).toInt()
+            } else {
+                // Player row enters from the right and travels left.
+                ((1f - eased) * 72f).toInt()
+            }
+
+            // Top bar exits left; bottom bar exits right.
+            val exitOffset = if (isOpponent) {
+                -((1f - exitProgress) * sw).toInt()
+            } else {
+                ((1f - exitProgress) * sw).toInt()
+            }
+
+            val x = finalX + introOffset + exitOffset
+            if (slot < stacks.size && !stacks[slot].isEmpty) {
+                drawScaledItem(ctx, stacks[slot], x, y, slotSize)
+            } else {
+                ctx.drawTexture(
+                    EMPTY_BALL_TEXTURE,
+                    x,
+                    y,
+                    0f,
+                    0f,
+                    16,
+                    16,
+                    EMPTY_BALL_TEXTURE_SIZE,
+                    EMPTY_BALL_TEXTURE_SIZE
+                )
+            }
+        }
+    }
+
+    private fun drawScaledItem(ctx: DrawContext, stack: ItemStack, x: Int, y: Int, size: Int) {
+        // size is intentionally fixed at 16 in drawTeamBalls().
+        ctx.drawItem(stack, x, y)
+    }
+
+    /** Slight overshoot, then settle — the small GBA-style ball "snap". */
+    private fun easeOutBack(t: Float): Float {
+        val c1 = 1.70158f
+        val c3 = c1 + 1f
+        val x = t - 1f
+        return 1f + c3 * x * x * x + c1 * x * x
+    }
+
+    /**
+     * Small bottom-right hint using the key's actual current binding, so the
+     * displayed label stays correct when the player remaps the control.
+     */
+    private fun drawSkipPrompt(ctx: DrawContext, sw: Int, sh: Int) {
+        val font = MinecraftClient.getInstance().textRenderer
+        val keyName = BattleSliderKeybinds.getSkipKeyText().string
+        val label = "$keyName  Skip"
+        val padX = 6
+        val padY = 4
+        val width = font.getWidth(label) + padX * 2
+        val height = font.fontHeight + padY * 2
+        val x = sw - width - 8
+        val y = sh - height - 8
+
+        ctx.fill(x, y, x + width, y + height, argb(170, 0x0A, 0x0A, 0x0A))
+        ctx.fill(x, y, x + width, y + 1, argb(210, 0xFF, 0xFF, 0xFF))
+        ctx.drawText(font, label, x + padX, y + padY, 0xFFFFFFFF.toInt(), true)
     }
 
     /** Every flick now reaches true pitch black at its peak (fading in/out via a sine curve); the final flick ramps up and holds instead of fading back down. */
@@ -422,29 +757,44 @@ object BattleIntroOverlay {
         return (pulse * 255).toInt().coerceIn(0, 255)
     }
 
-    // ── Pixelated dithered gradient ───────────────────────────────────────────
+    // ── Fast pixelated gradient ───────────────────────────────────────────────
+    // The original renderer issued one fill() call for every 4x4 pixel cell,
+    // creating tens of thousands of draw calls per frame at high resolutions.
+    // This version keeps the blocky/dithered appearance using a fixed grid of
+    // broad strips: 48 horizontal color steps x 6 vertical dither bands.
+    // That caps each bar at 288 gradient fills regardless of GUI resolution.
+    private const val GRADIENT_STEPS = 48
+    private const val DITHER_BANDS = 6
+
     private fun drawPixelGradient(
         ctx: DrawContext, x1: Int, y1: Int, x2: Int, y2: Int,
         colorA: Int, colorB: Int, horizontal: Boolean
     ) {
-        val w = x2 - x1; val h = y2 - y1
-        if (w <= 0 || h <= 0) return
-        val pixSize = 4
-        val xBlocks = (w + pixSize - 1) / pixSize
-        val yBlocks = (h + pixSize - 1) / pixSize
+        val width = x2 - x1
+        val height = y2 - y1
+        if (width <= 0 || height <= 0) return
 
-        for (bx in 0 until xBlocks) {
-            for (by in 0 until yBlocks) {
-                val t = if (horizontal) bx.toFloat() / xBlocks.coerceAtLeast(1)
-                else by.toFloat() / yBlocks.coerceAtLeast(1)
+        val steps = if (horizontal) GRADIENT_STEPS.coerceAtMost(width) else DITHER_BANDS.coerceAtMost(height)
+        val bands = if (horizontal) DITHER_BANDS.coerceAtMost(height) else GRADIENT_STEPS.coerceAtMost(width)
 
-                val dither = BAYER4[by % 4][bx % 4] / 16f
-                val tf = (t + (dither - 0.5f) * 0.18f).coerceIn(0f, 1f)
+        for (step in 0 until steps) {
+            val axisStart = if (horizontal) x1 + width * step / steps else y1 + height * step / steps
+            val axisEnd = if (horizontal) x1 + width * (step + 1) / steps else y1 + height * (step + 1) / steps
+            val baseT = if (steps <= 1) 0f else step.toFloat() / (steps - 1)
 
-                val color = lerpColor(colorA, colorB, tf)
-                val px = x1 + bx * pixSize
-                val py = y1 + by * pixSize
-                ctx.fill(px, py, (px + pixSize).coerceAtMost(x2), (py + pixSize).coerceAtMost(y2), color)
+            for (band in 0 until bands) {
+                val crossStart = if (horizontal) y1 + height * band / bands else x1 + width * band / bands
+                val crossEnd = if (horizontal) y1 + height * (band + 1) / bands else x1 + width * (band + 1) / bands
+
+                val dither = BAYER4[band % 4][step % 4] / 16f
+                val adjustedT = (baseT + (dither - 0.5f) * 0.10f).coerceIn(0f, 1f)
+                val color = lerpColor(colorA, colorB, adjustedT)
+
+                if (horizontal) {
+                    ctx.fill(axisStart, crossStart, axisEnd, crossEnd, color)
+                } else {
+                    ctx.fill(crossStart, axisStart, crossEnd, axisEnd, color)
+                }
             }
         }
     }
@@ -619,23 +969,194 @@ object BattleIntroOverlay {
     fun isAnimating(): Boolean = state != State.IDLE && !isFlushing
 
     /**
-     * Skips straight to the exit phase -- cuts short whatever's currently
-     * playing (flicker, bars-in, VS, characters-in, hold) but keeps the
-     * SLIDING_OUT exit itself intact, so it still reads as a smooth ending
-     * rather than an abrupt cut. Call from a keybinding.
+     * The intro may only be skipped before its normal exit has started.
+     * Once SLIDING_OUT begins, packet replay is already imminent and accepting
+     * another skip request could interfere with the normal completion path.
+     */
+    fun canSkip(): Boolean =
+        state != State.IDLE && state != State.SLIDING_OUT && !isFlushing
+
+    /**
+     * Fast-forwards only the VISUAL intro to its normal slide-out phase.
+     *
+     * We intentionally do not flush packets directly here. A key press can happen
+     * while Cobblemon is still delivering and our mixins are still collecting the
+     * battle GUI/send-out packets. Flushing at that instant can replay an incomplete
+     * packet set and leave the battle GUI partially initialized or softlocked.
+     *
+     * By entering SLIDING_OUT and letting the ordinary completion path call
+     * finishIntroAndFlushPackets(), the remaining 1.2 seconds act as a safe packet
+     * collection window. The normal opponent-first, player-after-2.5s stagger is
+     * therefore preserved for both natural completion and skipped intros.
      */
     fun skip() {
-        if (state == State.IDLE || state == State.SLIDING_OUT) return
+        debugLog(
+            "[t+{}ms] SKIP requested | state={}, canSkip={}, flushing={}, core={}, opponent={}, player={}",
+            elapsedDebugMs(),
+            state,
+            canSkip(),
+            isFlushing,
+            pendingCorePackets.size,
+            pendingOpponentPackets.size,
+            pendingPlayerPackets.size
+        )
+
+        if (!canSkip()) {
+            debugLog("Skip ignored because state={} is not currently skippable", state)
+            return
+        }
+
         state = State.SLIDING_OUT
         progress = 1f
         lastTimeMs = 0L
+        playVanillaUiSound(SoundEvents.UI_TOAST_OUT)
+
+        debugLog(
+            "Skip accepted: visual state changed to SLIDING_OUT; packet replay remains on normal completion path"
+        )
+    }
+
+    fun getDebugState(): String =
+        "state=$state, isFlushing=$isFlushing, corePackets=${pendingCorePackets.size}, opponentPackets=${pendingOpponentPackets.size}, playerPackets=${pendingPlayerPackets.size}, t+${elapsedDebugMs()}ms"
+
+    /**
+     * Single completion path shared by normal animation completion and skipping.
+     * Keeping packet replay here prevents the two paths from drifting apart.
+     */
+    private fun replayQueue(
+        queueName: String,
+        actions: List<PendingAction>
+    ) {
+        debugLog(
+            "[t+{}ms] REPLAY {} batch start | actions={}",
+            elapsedDebugMs(),
+            queueName,
+            actions.size
+        )
+
+        actions.forEachIndexed { index, pending ->
+            debugLog(
+                "[t+{}ms] REPLAY {} {}/{} -> {} | queuedFor={}ms",
+                elapsedDebugMs(),
+                queueName,
+                index + 1,
+                actions.size,
+                pending.label,
+                System.currentTimeMillis() - pending.queuedAtMs
+            )
+            try {
+                pending.action.invoke()
+            } catch (e: Exception) {
+                LOGGER.error(
+                    "[t+{}ms] REPLAY FAILURE {} -> {}",
+                    elapsedDebugMs(),
+                    pending.label,
+                    e.message,
+                    e
+                )
+            }
+        }
+
+        debugLog(
+            "[t+{}ms] REPLAY {} batch end",
+            elapsedDebugMs(),
+            queueName
+        )
+    }
+
+    private fun drain(
+        queue: java.util.concurrent.ConcurrentLinkedQueue<PendingAction>
+    ): List<PendingAction> {
+        val result = ArrayList<PendingAction>()
+        var pending = queue.poll()
+        while (pending != null) {
+            result.add(pending)
+            pending = queue.poll()
+        }
+        return result
+    }
+
+    /**
+     * Replay order is deliberately:
+     *
+     * 1. CORE battle-model / GUI packets
+     * 2. Opponent throw, spawn and cry
+     * 3. Local-player throw, spawn and cry after the configured stagger
+     *
+     * Previously generic packets, including BattleInitializePacket, shared the
+     * delayed PLAYER queue. That allowed opponent entity/spawn packets to replay
+     * before Cobblemon's client battle model existed, explaining the intermittent
+     * incomplete GUI and softlock after a skip.
+     */
+    private fun finishIntroAndFlushPackets() {
+        if (state == State.IDLE || isFlushing) return
+
+        isFlushing = true
+
+        // Snapshot every queue before any replay starts. Packets that arrive after
+        // this point are no longer intercepted because isAnimating() is false.
+        val coreBatch = drain(pendingCorePackets)
+        val opponentBatch = drain(pendingOpponentPackets)
+        val playerBatch = drain(pendingPlayerPackets)
+
+        debugLog(
+            "[t+{}ms] FLUSH snapshot | core={}, opponent={}, player={}",
+            elapsedDebugMs(),
+            coreBatch.size,
+            opponentBatch.size,
+            playerBatch.size
+        )
+
+        // Stop suppressing Cobblemon rendering before replaying BattleInitialize.
+        state = State.IDLE
+
+        replayQueue("CORE", coreBatch)
+        replayQueue("OPPONENT", opponentBatch)
+
+        if (playerBatch.isNotEmpty()) {
+            debugLog(
+                "[t+{}ms] PLAYER batch scheduled after {}s | actions={}",
+                elapsedDebugMs(),
+                PLAYER_STAGGER_DELAY_S,
+                playerBatch.size
+            )
+            afterOnClient(PLAYER_STAGGER_DELAY_S) {
+                replayQueue("PLAYER", playerBatch)
+            }
+        } else {
+            LOGGER.warn("[t+{}ms] PLAYER batch is empty", elapsedDebugMs())
+        }
+
+        localSkinId = null
+        opponentSkinId = null
+        localEntityRef = null
+        opponentEntityRef = null
+        localPokemonUUIDs = emptySet()
+        opponentPokemonUUIDs = emptySet()
+        localBallStacks = emptyList()
+        opponentBallStacks = emptyList()
+        topParticles.clear()
+        botParticles.clear()
+
+        /*
+         * Do not clear entityOwnership yet. The delayed player cry packet may
+         * still consult it during replay. It is reset at the next trigger().
+         */
+        isFlushing = false
+
+        debugLog(
+            "[t+{}ms] FLUSH dispatch complete | delayedPlayerActions={}",
+            elapsedDebugMs(),
+            playerBatch.size
+        )
     }
 
     fun getRemainingAnimationMs(): Long = when (state) {
-        State.FLICKER              -> ((1f - progress) * FLICKER_TOTAL_MS).toLong() + BARS_SLIDE_MS + VS_APPEAR_MS + CHARACTERS_SLIDE_MS + HOLD_DURATION_MS + SLIDE_OUT_DURATION_MS
-        State.BARS_SLIDE_IN        -> ((1f - progress) * BARS_SLIDE_MS).toLong() + VS_APPEAR_MS + CHARACTERS_SLIDE_MS + HOLD_DURATION_MS + SLIDE_OUT_DURATION_MS
-        State.VS_APPEAR            -> ((1f - progress) * VS_APPEAR_MS).toLong() + CHARACTERS_SLIDE_MS + HOLD_DURATION_MS + SLIDE_OUT_DURATION_MS
-        State.CHARACTERS_SLIDE_IN  -> ((1f - progress) * CHARACTERS_SLIDE_MS).toLong() + HOLD_DURATION_MS + SLIDE_OUT_DURATION_MS
+        State.FLICKER              -> ((1f - progress) * FLICKER_TOTAL_MS).toLong() + BARS_SLIDE_MS + VS_APPEAR_MS + CHARACTERS_SLIDE_MS + TEAM_BALLS_SLIDE_MS + HOLD_DURATION_MS + SLIDE_OUT_DURATION_MS
+        State.BARS_SLIDE_IN        -> ((1f - progress) * BARS_SLIDE_MS).toLong() + VS_APPEAR_MS + CHARACTERS_SLIDE_MS + TEAM_BALLS_SLIDE_MS + HOLD_DURATION_MS + SLIDE_OUT_DURATION_MS
+        State.VS_APPEAR            -> ((1f - progress) * VS_APPEAR_MS).toLong() + CHARACTERS_SLIDE_MS + TEAM_BALLS_SLIDE_MS + HOLD_DURATION_MS + SLIDE_OUT_DURATION_MS
+        State.CHARACTERS_SLIDE_IN  -> ((1f - progress) * CHARACTERS_SLIDE_MS).toLong() + TEAM_BALLS_SLIDE_MS + HOLD_DURATION_MS + SLIDE_OUT_DURATION_MS
+        State.TEAM_BALLS_SLIDE_IN -> ((1f - progress) * TEAM_BALLS_SLIDE_MS).toLong() + HOLD_DURATION_MS + SLIDE_OUT_DURATION_MS
         State.HOLD                 -> ((1f - progress) * HOLD_DURATION_MS).toLong() + SLIDE_OUT_DURATION_MS
         State.SLIDING_OUT          -> (progress * SLIDE_OUT_DURATION_MS).toLong()
         State.IDLE                 -> 0L

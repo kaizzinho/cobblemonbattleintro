@@ -1,0 +1,11 @@
+{
+  "team_ball_lineup": {
+    "subtitle": "subtitles.battleslider.team_ball_lineup",
+    "sounds": [
+      {
+        "name": "battleslider:ui/team_ball_lineup",
+        "stream": false
+      }
+    ]
+  }
+}

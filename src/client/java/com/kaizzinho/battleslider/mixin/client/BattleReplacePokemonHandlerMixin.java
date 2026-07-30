@@ -14,11 +14,12 @@ public abstract class BattleReplacePokemonHandlerMixin {
 
     @Inject(method = "handle", at = @At("HEAD"), cancellable = true)
     private void onHandle(BattleReplacePokemonPacket packet, MinecraftClient client, CallbackInfo ci) {
-        System.out.println("[Battleslider] Intercepted " + packet.getClass().getSimpleName() + ", animating=" + BattleIntroOverlay.INSTANCE.isAnimating());
         if (!BattleIntroOverlay.INSTANCE.isAnimating()) return;
+
         ci.cancel();
-        BattleIntroOverlay.INSTANCE.addPendingPacket(() ->
-            client.execute(() -> BattleReplacePokemonHandler.INSTANCE.handle(packet, client))
+        BattleIntroOverlay.INSTANCE.addPendingCorePacket(
+            "BattleReplacePokemonPacket",
+            () -> client.execute(() -> BattleReplacePokemonHandler.INSTANCE.handle(packet, client))
         );
     }
 }

@@ -40,10 +40,13 @@ public abstract class PlayPosableAnimationHandlerMixin {
             return Unit.INSTANCE;
         });
 
+        String label = "PlayPosableAnimationPacket[entityId=" + packet.getEntityId()
+                + ",ownerKnown=" + (ownedByPlayer != null) + "]";
+
         if (isPlayerOwned) {
-            BattleIntroOverlay.INSTANCE.addPendingPlayerPacket(replay);
+            BattleIntroOverlay.INSTANCE.addPendingPlayerPacket(label, replay);
         } else {
-            BattleIntroOverlay.INSTANCE.addPendingOpponentPacket(replay);
+            BattleIntroOverlay.INSTANCE.addPendingOpponentPacket(label, replay);
         }
     }
 }

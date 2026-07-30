@@ -66,10 +66,16 @@ public abstract class SpawnExtraDataEntityHandlerMixin {
         Runnable replay = () ->
                 client.execute(() -> packet.spawnAndApply(client));
 
+        String label = packet.getClass().getSimpleName();
+        if (packet instanceof SpawnPokemonPacket spawnPacket) {
+            label += "[pokemon=" + spawnPacket.getPokemonUUID()
+                    + ",entityId=" + spawnPacket.getVanillaSpawnPacket().getEntityId() + "]";
+        }
+
         if (isPlayerOwned) {
-            BattleIntroOverlay.INSTANCE.addPendingPlayerPacket(replay);
+            BattleIntroOverlay.INSTANCE.addPendingPlayerPacket(label, replay);
         } else {
-            BattleIntroOverlay.INSTANCE.addPendingOpponentPacket(replay);
+            BattleIntroOverlay.INSTANCE.addPendingOpponentPacket(label, replay);
         }
     }
 }

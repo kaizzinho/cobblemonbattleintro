@@ -51,10 +51,13 @@ public abstract class PlaySoundS2CPacketMixin {
             }
         };
 
+        String label = "PlaySoundS2CPacket[POKE_BALL_THROW,x=" + x
+                + ",y=" + y + ",z=" + z + "]";
+
         if (isPlayerOwned) {
-            BattleIntroOverlay.INSTANCE.addPendingPlayerPacket(replay);
+            BattleIntroOverlay.INSTANCE.addPendingPlayerPacket(label, replay);
         } else {
-            BattleIntroOverlay.INSTANCE.addPendingOpponentPacket(replay);
+            BattleIntroOverlay.INSTANCE.addPendingOpponentPacket(label, replay);
         }
     }
 }

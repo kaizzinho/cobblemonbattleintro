@@ -15,9 +15,11 @@ public abstract class BattleMessageHandlerMixin {
     @Inject(method = "handle", at = @At("HEAD"), cancellable = true)
     private void onHandle(BattleMessagePacket packet, MinecraftClient client, CallbackInfo ci) {
         if (!BattleIntroOverlay.INSTANCE.isAnimating()) return;
+
         ci.cancel();
-        BattleIntroOverlay.INSTANCE.addPendingPacket(() ->
-                client.execute(() -> BattleMessageHandler.INSTANCE.handle(packet, client))
+        BattleIntroOverlay.INSTANCE.addPendingCorePacket(
+            "BattleMessagePacket",
+            () -> client.execute(() -> BattleMessageHandler.INSTANCE.handle(packet, client))
         );
     }
 }

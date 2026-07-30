@@ -14,14 +14,12 @@ public abstract class BattleInitializeHandlerMixin {
 
     @Inject(method = "handle", at = @At("HEAD"), cancellable = true)
     private void onHandle(BattleInitializePacket packet, MinecraftClient client, CallbackInfo ci) {
-        System.out.println("[Battleslider] Intercepted " + packet.getClass().getSimpleName() + ", animating=" + BattleIntroOverlay.INSTANCE.isAnimating());
         if (!BattleIntroOverlay.INSTANCE.isAnimating()) return;
 
         ci.cancel();
-
-        // Must run on the main client thread, not the render thread
-        BattleIntroOverlay.INSTANCE.setPendingBattlePacket(() ->
-                client.execute(() -> BattleInitializeHandler.INSTANCE.handle(packet, client))
+        BattleIntroOverlay.INSTANCE.addPendingCorePacket(
+            "BattleInitializePacket",
+            () -> client.execute(() -> BattleInitializeHandler.INSTANCE.handle(packet, client))
         );
     }
 }
