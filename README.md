@@ -248,15 +248,11 @@ Mod Fabric de módulo único escrito em Kotlin, utilizando mixins client-side e 
 - [x] **Compatibilidade com Radical Cobblemon Trainers** — suporte opcional para entidades, nomes e cores de tipo dos treinadores do RCT.
 - [x] **Suporte a PvP** — batalhas entre jogadores utilizam o mesmo fluxo visual de introdução VS.
 
-### Capturas de tela
+### Showcase
 
-<!-- Substitua estes espaços depois de adicionar suas capturas. -->
 
-<!--
-![Introdução VS completa](docs/images/full_vs_intro.png)
-![Retratos e parties](docs/images/party_lineup.png)
-![Compatibilidade com Radical Cobblemon Trainers](docs/images/rct_trainer_intro.png)
--->
+![Full VS introduction](docs/images/full_vs_intro.png)
+![Gif demo](docs/images/battle_intro.gif)
 
 ### Requisitos
 
