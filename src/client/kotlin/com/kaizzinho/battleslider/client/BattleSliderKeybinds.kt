@@ -1,45 +1,43 @@
 package com.kaizzinho.battleslider.client
 
+import com.kaizzinho.battleslider.client.config.BattleSliderConfig
 import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper
+import net.minecraft.client.MinecraftClient
 import net.minecraft.client.option.KeyBinding
 import net.minecraft.client.util.InputUtil
 import net.minecraft.text.Text
 import org.lwjgl.glfw.GLFW
 import org.slf4j.LoggerFactory
-import com.kaizzinho.battleslider.client.config.BattleSliderConfig
 
-/**
- * Registers and polls the intro-skip key.
- *
- * Detection uses both KeyBinding.wasPressed() and a rising-edge check on
- * KeyBinding.isPressed. The second path is intentionally redundant: it makes
- * the skip reliable even when another screen/mod consumes the queued press
- * count before END_CLIENT_TICK runs.
- */
+
 @Environment(EnvType.CLIENT)
 object BattleSliderKeybinds {
 
-    private val LOGGER = LoggerFactory.getLogger("battleslider/BattleSliderKeybinds")
+    private val LOGGER =
+        LoggerFactory.getLogger("battleslider/BattleSliderKeybinds")
 
-    private fun debugLog(message: String, vararg args: Any?) {
-        if (BattleSliderConfig.debugLogging) {
-            LOGGER.info(message, *args)
-        }
-    }
+    private const val RAW_PRESS_DEDUP_WINDOW_MS = 150L
 
     private lateinit var skipIntroKey: KeyBinding
     private var registered = false
     private var wasPhysicallyDown = false
+    private var lastRawPressMs = Long.MIN_VALUE
 
     fun getSkipKeyText(): Text =
-        if (::skipIntroKey.isInitialized) skipIntroKey.boundKeyLocalizedText else Text.literal("V")
+        if (::skipIntroKey.isInitialized) {
+            skipIntroKey.boundKeyLocalizedText
+        } else {
+            Text.literal("V")
+        }
 
     fun register() {
         if (registered) {
-            LOGGER.warn("BattleSliderKeybinds.register() ignored: already registered")
+            LOGGER.warn(
+                "BattleSliderKeybinds.register() ignored: already registered"
+            )
             return
         }
         registered = true
@@ -53,9 +51,7 @@ object BattleSliderKeybinds {
             )
         )
 
-        // Do not resolve boundKeyLocalizedText here. Client entrypoints run before
-        // Minecraft has finished initializing GLFW, and resolving a physical key
-        // name can call GLFW.glfwGetKeyName(), producing a pre-init GLFW error.
+
         LOGGER.info(
             "Skip-intro keybind registered: translationKey={}, defaultKeyCode={}",
             skipIntroKey.translationKey,
@@ -63,41 +59,96 @@ object BattleSliderKeybinds {
         )
 
         ClientTickEvents.END_CLIENT_TICK.register { client ->
-            // Standard Fabric/Minecraft press queue.
             var queuedPressDetected = false
             while (skipIntroKey.wasPressed()) {
                 queuedPressDetected = true
             }
 
-            // Rising-edge fallback. This fires once when the key changes from
-            // released to held, not every tick while the player holds it.
             val physicallyDown = skipIntroKey.isPressed
-            val risingEdgeDetected = physicallyDown && !wasPhysicallyDown
+            val risingEdgeDetected =
+                physicallyDown && !wasPhysicallyDown
             wasPhysicallyDown = physicallyDown
 
             if (!queuedPressDetected && !risingEdgeDetected) {
                 return@register
             }
 
-            debugLog(
-                "Skip key detected: queuedPress={}, risingEdge={}, screen={}, overlay={}",
-                queuedPressDetected,
-                risingEdgeDetected,
-                client.currentScreen?.javaClass?.simpleName ?: "none",
-                BattleIntroOverlay.getDebugState()
-            )
 
+            val rawAlreadyHandled =
+                System.currentTimeMillis() - lastRawPressMs <=
+                    RAW_PRESS_DEDUP_WINDOW_MS
+
+            if (rawAlreadyHandled) {
+                debugLog(
+                    "Ignoring duplicate tick-level skip detection after raw key callback"
+                )
+                return@register
+            }
+
+            requestSkip(
+                client = client,
+                source = "client-tick",
+                details = "queued=$queuedPressDetected, risingEdge=$risingEdgeDetected"
+            )
+        }
+    }
+
+
+    @JvmStatic
+// raw input catches skip before battle screens eat the key
+    fun onRawKeyPressed(keyCode: Int, scanCode: Int) {
+        if (!registered || !::skipIntroKey.isInitialized) {
+            return
+        }
+
+        if (!skipIntroKey.matchesKey(keyCode, scanCode)) {
+            return
+        }
+
+        lastRawPressMs = System.currentTimeMillis()
+
+        requestSkip(
+            client = MinecraftClient.getInstance(),
+            source = "raw-keyboard",
+            details = "keyCode=$keyCode, scanCode=$scanCode"
+        )
+    }
+
+    private fun requestSkip(
+        client: MinecraftClient,
+        source: String,
+        details: String
+    ) {
+        debugLog(
+            "Skip input detected: source={}, {}, screen={}, overlay={}",
+            source,
+            details,
+            client.currentScreen?.javaClass?.simpleName ?: "none",
+            BattleIntroOverlay.getDebugState()
+        )
+
+
+        client.execute {
             if (BattleIntroOverlay.canSkip()) {
-                client.execute {
-                    debugLog("Calling BattleIntroOverlay.skip()")
-                    BattleIntroOverlay.skip()
-                }
+                debugLog(
+                    "Calling BattleIntroOverlay.skip() from {}",
+                    source
+                )
+                BattleIntroOverlay.skip()
             } else {
                 debugLog(
-                    "Skip press detected, but the overlay is not currently skippable: {}",
+                    "Skip request from {} ignored because overlay is not " +
+                        "currently skippable: {}",
+                    source,
                     BattleIntroOverlay.getDebugState()
                 )
             }
+        }
+    }
+
+    private fun debugLog(message: String, vararg args: Any?) {
+        if (BattleSliderConfig.debugLogging) {
+            LOGGER.info(message, *args)
         }
     }
 }

@@ -8,16 +8,25 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/**
- * Suppresses Cobblemon's BattleGUI render (italic trainer name title card)
- * while our battle intro animation is playing.
- */
-@Mixin(value = BattleGUI.class, remap = false)
+
+@Mixin(value = BattleGUI.class, remap = false, priority = 2500)
 public abstract class BattleGUIMixin {
 
-    @Inject(method = "render", at = @At("HEAD"), cancellable = true)
-    private void suppressDuringAnimation(DrawContext context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
-        if (BattleIntroOverlay.INSTANCE.isAnimating()) {
+    @Inject(
+            method = "render",
+            at = @At("HEAD"),
+            cancellable = true,
+            require = 0,
+            remap = true
+    )
+    private void battleslider$suppressDuringAnimation(
+            DrawContext context,
+            int mouseX,
+            int mouseY,
+            float delta,
+            CallbackInfo ci
+    ) {
+        if (BattleIntroOverlay.INSTANCE.isVisualTransitionActive()) {
             ci.cancel();
         }
     }

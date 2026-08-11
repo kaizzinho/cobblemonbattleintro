@@ -11,19 +11,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/**
- * Intercepts PlayPosableAnimationHandler.handle() -- carries the Pokemon CRY
- * trigger. This packet only has an entity ID, no owner info, so we look it
- * up in BattleIntroOverlay's ownership map (populated when the matching
- * SpawnPokemonPacket was queued) to route it into the correct player/opponent
- * queue -- keeping the whole send-out sequence (throw, beam, cry) grouped and
- * staggered per side, rather than everything firing together.
- *
- * The 1.5s delay before the cry actually plays is preserved within each
- * side's own sequence (so ball-open and cry still don't overlap for a given
- * trainer); the player-vs-opponent stagger itself happens in
- * BattleIntroOverlay's flush logic.
- */
+
 @Mixin(value = PlayPosableAnimationHandler.class, remap = false)
 public abstract class PlayPosableAnimationHandlerMixin {
 
@@ -33,10 +21,15 @@ public abstract class PlayPosableAnimationHandlerMixin {
         ci.cancel();
 
         Boolean ownedByPlayer = BattleIntroOverlay.INSTANCE.isPlayerOwnedEntity(packet.getEntityId());
-        boolean isPlayerOwned = ownedByPlayer == null || ownedByPlayer; // unknown -> default to player's batch
+        boolean isPlayerOwned = ownedByPlayer == null || ownedByPlayer;
 
         Runnable replay = () -> SchedulingFunctionsKt.afterOnClient(1.5f, () -> {
-            client.execute(() -> PlayPosableAnimationHandler.INSTANCE.handle(packet, client));
+            client.execute(() -> {
+                PlayPosableAnimationHandler.INSTANCE.handle(packet, client);
+
+
+                BattleIntroOverlay.INSTANCE.refreshBattlePokemonFacing();
+            });
             return Unit.INSTANCE;
         });
 

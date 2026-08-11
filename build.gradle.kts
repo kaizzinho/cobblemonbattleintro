@@ -15,6 +15,10 @@ repositories {
     mavenCentral()
     maven("https://artefacts.cobblemon.com/releases/") { name = "Cobblemon" }
     maven("https://api.modrinth.com/maven") { name = "Modrinth" }
+    maven {
+        name = "Terraformers"
+        url = uri("https://maven.terraformersmc.com/")
+    }
 }
 
 loom {
@@ -57,6 +61,7 @@ dependencies {
     modLocalRuntime(files("libs/ForgeConfigAPIPort-v21.1.6-1.21.1-Fabric.jar"))
     implementation("com.electronwill.night-config:core:3.8.0")
     implementation("com.electronwill.night-config:toml:3.8.0")
+    modImplementation("com.terraformersmc:modmenu:11.0.4")
 }
 
 java {
@@ -76,12 +81,9 @@ tasks.processResources {
     }
 }
 
-tasks.jar {
-    from("LICENSE") {
-        rename { "${it}_${project.property("archives_base_name")}" }
+tasks.withType<Jar>().configureEach {
+    from(rootProject.file("LICENSE")) {
+        rename { "LICENSE_${project.property("archives_base_name")}" }
     }
-}
-
-tasks.withType<Jar> {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }

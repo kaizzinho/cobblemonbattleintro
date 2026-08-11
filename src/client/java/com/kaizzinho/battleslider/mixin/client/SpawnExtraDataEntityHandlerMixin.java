@@ -5,6 +5,7 @@ import com.cobblemon.mod.common.net.messages.client.spawn.SpawnExtraDataEntityPa
 import com.cobblemon.mod.common.net.messages.client.spawn.SpawnPokemonPacket;
 import com.kaizzinho.battleslider.client.BattleIntroOverlay;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.network.packet.s2c.play.EntitySpawnS2CPacket;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -12,19 +13,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.UUID;
 
-/**
- * Intercepts SpawnExtraDataEntityHandler.handle().
- *
- * This covers both Poké Ball entity spawns and the actual Pokémon entity spawn
- * represented by SpawnPokemonPacket.
- *
- * SpawnPokemonPacket instances are classified using their Pokémon UUID against
- * the party UUIDs captured by BattleIntroOverlay when the battle starts.
- *
- * The spawned entity's vanilla network ID is also recorded so later packets
- * that only contain an entity ID, such as animation or cry packets, can still
- * be associated with the correct trainer.
- */
+
 @Mixin(value = SpawnExtraDataEntityHandler.class, remap = false)
 public abstract class SpawnExtraDataEntityHandlerMixin {
 
@@ -38,44 +27,78 @@ public abstract class SpawnExtraDataEntityHandlerMixin {
             MinecraftClient client,
             CallbackInfo ci
     ) {
-        if (!BattleIntroOverlay.INSTANCE.isAnimating()) {
+        BattleIntroOverlay overlay = BattleIntroOverlay.INSTANCE;
+        if (!overlay.isAnimating()) {
             return;
+        }
+
+        EntitySpawnS2CPacket vanillaSpawnPacket =
+                packet.getVanillaSpawnPacket();
+
+
+        boolean isPlayerOwned = overlay.isSoundNearPlayer(
+                vanillaSpawnPacket.getX(),
+                vanillaSpawnPacket.getY(),
+                vanillaSpawnPacket.getZ()
+        );
+
+        int pokemonEntityId = -1;
+
+        if (packet instanceof SpawnPokemonPacket spawnPacket) {
+            UUID pokemonUUID = spawnPacket.getPokemonUUID();
+            boolean isLocalPokemon = overlay.isLocalPokemon(pokemonUUID);
+            boolean isOpponentPokemon = overlay.isOpponentPokemon(pokemonUUID);
+
+
+            if (!isLocalPokemon && !isOpponentPokemon) {
+                return;
+            }
+
+            isPlayerOwned = isLocalPokemon;
+            pokemonEntityId = vanillaSpawnPacket.getEntityId();
+
+            overlay.registerBattlePokemonSpawn(
+                    pokemonEntityId,
+                    isPlayerOwned,
+                    vanillaSpawnPacket.getX(),
+                    vanillaSpawnPacket.getZ()
+            );
         }
 
         ci.cancel();
 
-        // Unknown packet types use the player's queue as a fallback.
-        boolean isPlayerOwned = true;
+        final boolean queuedForPlayer = isPlayerOwned;
+        final int queuedPokemonEntityId = pokemonEntityId;
 
-        if (packet instanceof SpawnPokemonPacket spawnPacket) {
-            UUID pokemonUUID = spawnPacket.getPokemonUUID();
+        Runnable replay = () -> client.execute(() -> {
+            if (packet instanceof SpawnPokemonPacket spawnPacket) {
+                Float desiredYaw =
+                        overlay.getDesiredBattlePokemonYaw(queuedPokemonEntityId);
 
-            isPlayerOwned =
-                    !BattleIntroOverlay.INSTANCE.isOpponentPokemon(pokemonUUID);
+                if (desiredYaw != null) {
 
-            int entityId = spawnPacket
-                    .getVanillaSpawnPacket()
-                    .getEntityId();
 
-            BattleIntroOverlay.INSTANCE.registerPokemonOwnership(
-                    entityId,
-                    isPlayerOwned
-            );
-        }
+                    spawnPacket.setSpawnYaw(desiredYaw);
+                }
+            }
 
-        Runnable replay = () ->
-                client.execute(() -> packet.spawnAndApply(client));
+            packet.spawnAndApply(client);
+
+            if (queuedPokemonEntityId >= 0) {
+                overlay.onBattlePokemonSpawned(queuedPokemonEntityId);
+            }
+        });
 
         String label = packet.getClass().getSimpleName();
         if (packet instanceof SpawnPokemonPacket spawnPacket) {
             label += "[pokemon=" + spawnPacket.getPokemonUUID()
-                    + ",entityId=" + spawnPacket.getVanillaSpawnPacket().getEntityId() + "]";
+                    + ",entityId=" + queuedPokemonEntityId + "]";
         }
 
-        if (isPlayerOwned) {
-            BattleIntroOverlay.INSTANCE.addPendingPlayerPacket(label, replay);
+        if (queuedForPlayer) {
+            overlay.addPendingPlayerPacket(label, replay);
         } else {
-            BattleIntroOverlay.INSTANCE.addPendingOpponentPacket(label, replay);
+            overlay.addPendingOpponentPacket(label, replay);
         }
     }
 }

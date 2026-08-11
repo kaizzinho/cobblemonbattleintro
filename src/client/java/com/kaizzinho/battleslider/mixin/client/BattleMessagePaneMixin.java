@@ -1,28 +1,29 @@
 package com.kaizzinho.battleslider.mixin.client;
 
-import com.cobblemon.mod.common.client.gui.battle.BattleOverlay;
+import com.cobblemon.mod.common.client.gui.battle.widgets.BattleMessagePane;
 import com.kaizzinho.battleslider.client.BattleIntroOverlay;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.render.RenderTickCounter;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 
-@Mixin(value = BattleOverlay.class, remap = false, priority = 2500)
-public abstract class BattleOverlayMixin {
+@Mixin(value = BattleMessagePane.class, remap = false, priority = 2600)
+public abstract class BattleMessagePaneMixin {
 
     @Inject(
-            method = "render",
+            method = "renderWidget",
             at = @At("HEAD"),
             cancellable = true,
             require = 0,
             remap = true
     )
-    private void battleslider$suppressDuringAnimation(
+    private void battleslider$suppressBattleMessagePane(
             DrawContext context,
-            RenderTickCounter tickCounter,
+            int mouseX,
+            int mouseY,
+            float delta,
             CallbackInfo ci
     ) {
         if (BattleIntroOverlay.INSTANCE.isVisualTransitionActive()) {

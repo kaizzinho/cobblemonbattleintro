@@ -11,21 +11,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/**
- * Intercepts the VANILLA PlaySoundS2CPacket handler -- this is how the
- * pokeball throw sound (CobblemonSounds.POKE_BALL_THROW) actually reaches
- * the client. It's played server-side via plain ServerWorld.playSound(),
- * completely bypassing every Cobblemon-specific packet we've been
- * intercepting elsewhere, which is why it was firing immediately (during
- * the flicker) instead of being staggered with everything else.
- *
- * This packet carries no owner/entity info, only a position -- so we
- * classify it by proximity to each trainer's actual position (the sound is
- * always played at the throwing trainer's location) rather than by ID.
- *
- * NOTE: unlike the Cobblemon-class mixins in this project, this targets a
- * real vanilla class, so it needs normal remapping (no remap=false).
- */
+
 @Mixin(ClientPlayNetworkHandler.class)
 public abstract class PlaySoundS2CPacketMixin {
 

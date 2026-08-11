@@ -11,10 +11,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.client.render.VertexConsumerProvider;
 
-/**
- * Suppresses entity nametag labels (the "Professor Oak" floating text)
- * while our battle intro animation is playing.
- */
+
 @Mixin(EntityRenderer.class)
 public abstract class EntityRendererMixin<T extends Entity> {
 
@@ -32,7 +29,7 @@ public abstract class EntityRendererMixin<T extends Entity> {
         float tickDelta,
         CallbackInfo ci
     ) {
-        if (BattleIntroOverlay.INSTANCE.isAnimating()) {
+        if (BattleIntroOverlay.INSTANCE.isVisualTransitionActive()) {
             ci.cancel();
         }
     }

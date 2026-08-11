@@ -1,0 +1,115 @@
+# Battle Slider Source-Available License 1.0
+
+
+Copyright (c) 2026 Kaizzinho
+All rights reserved except as expressly granted below
+
+1. scope
+
+This license applies to the source code compiled binaries assets and other original materials distributed as part of Cobblemon Battle Slider collectively referred to as the software
+
+Third party software libraries names trademarks artwork and other materials remain subject to their own rights and licenses
+
+2. permission for private and development use
+
+You may without separate written permission
+
+a view study and inspect the source code
+
+b clone or fork the source repository where the hosting platform permits it
+
+c modify and compile the software for your own private development testing or personal use
+
+d use an official unmodified release in a personal singleplayer installation
+
+e run the software in a private development or testing environment that is not offered to the public
+
+f submit issues pull requests patches or other contributions to the official project
+
+These permissions do not include public distribution publication deployment or use
+
+3. public use requires permission
+
+Prior written permission from Kaizzinho is required for every public modpack and every public multiplayer server using Battle Slider
+
+For the purposes of this license public use includes any use where the software is intentionally made available to players users customers members or the general public outside your own private development or personal testing environment
+
+Prior written permission is also required before you
+
+a include the software in a publicly distributed modpack client pack server pack launcher or similar bundle
+
+b operate or provide a public multiplayer server that uses the software
+
+c publicly distribute publish mirror upload or rehost compiled copies of the software other than an official distribution authorized by Kaizzinho
+
+d publicly distribute or deploy modified builds forks or derivative versions of the software
+
+e use the software as part of a commercial monetized sponsored or paid public service distribution or offering
+
+Permission may be granted or denied at the copyright holder's discretion and may include additional conditions
+
+Permission granted for one project server modpack release or distribution does not automatically grant permission for another
+
+4. private modpacks and private servers
+
+A genuinely private modpack or private multiplayer server used only for personal development testing or a closed nonpublic environment does not require separate permission under this license provided that it is not publicly advertised distributed sold monetized or made generally available
+
+If the project becomes public permission is required before that public use begins
+
+5. redistribution of source code
+
+The source repository may be viewed cloned or forked through normal features of the hosting platform
+
+You may not separately publish mirror repackage or redistribute the source code as an independent public distribution without prior written permission from Kaizzinho
+
+This section does not prohibit a normal repository fork created through functionality expressly provided by the source hosting platform
+
+6. modified and derivative versions
+
+You may create modifications or derivative versions privately for development testing learning or contribution purposes
+
+You may not publish distribute deploy or otherwise use a modified or derivative version publicly without prior written permission from Kaizzinho
+
+Any permission to publish a modified version does not grant rights to use the Battle Slider name logo branding or other project identity unless that permission is expressly included
+
+7. contributions
+
+Unless otherwise agreed in writing by submitting a contribution to the official Battle Slider project you represent that you have the right to submit it and you grant Kaizzinho a perpetual worldwide nonexclusive royalty free license to use reproduce modify distribute sublicense and incorporate that contribution into Battle Slider and related project releases
+
+8. no trademark license
+
+This license does not grant permission to use the Battle Slider name logo branding or the name of Kaizzinho to imply endorsement sponsorship or official status for an unauthorized project distribution fork server or modpack
+
+9. third party rights
+
+This license covers only copyright and related rights that Kaizzinho is legally able to license
+
+Minecraft Cobblemon Pokémon and any other third party names trademarks assets libraries or intellectual property remain the property of their respective owners and may be subject to separate terms
+
+10. termination
+
+Your permissions under this license terminate automatically if you materially violate these terms and do not cure the violation after receiving notice where applicable
+
+After termination you must stop the unauthorized distribution or public use of the software and remove unauthorized publicly distributed copies under your control
+
+The copyright holder may separately grant new permission in writing
+
+11. no warranty
+
+The software is provided as is without warranty of any kind express or implied including but not limited to warranties of merchantability fitness for a particular purpose and noninfringement
+
+To the maximum extent permitted by applicable law the copyright holder will not be liable for any claim damages or other liability arising from or related to the software or its use
+
+12. permission requests
+
+Requests for public modpack public server redistribution commercial use or other permissions must be made directly to Kaizzinho through an official Battle Slider project contact channel
+
+Written approval should identify the specific modpack server project distribution or use that is being authorized
+
+13. entire permission
+
+This license is the default permission for Battle Slider
+
+A separate written authorization from Kaizzinho may grant additional rights or exceptions for a specific person organization project server modpack release or distribution
+
+If a separate written authorization conflicts with this license the written authorization controls only for the scope expressly stated in that authorization

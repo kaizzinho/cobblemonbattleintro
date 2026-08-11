@@ -1,36 +1,59 @@
 package com.kaizzinho.battleslider
 
-import com.cobblemon.mod.common.api.battles.model.actor.BattleActor
 import com.cobblemon.mod.common.api.events.CobblemonEvents
+import com.cobblemon.mod.common.battles.actor.PlayerBattleActor
+import org.slf4j.LoggerFactory
 
-/**
- * Server-side cleanup for Pokémon that are already active in the world when a
- * trainer or PvP battle begins.
- *
- * BATTLE_STARTED_PRE is already late enough for Cobblemon to associate active
- * Pokémon with the incoming battle. Because of that, checking entity.battleId
- * can incorrectly reject the exact wandering companion we need to recall.
- *
- * Any party Pokémon that still has an active entity at this point is recalled.
- * Pokémon that are already inactive are left untouched.
- */
+
 object AutoRecallHandler {
 
+    private val LOGGER =
+        LoggerFactory.getLogger("battleslider/AutoRecallHandler")
+
+// only recall mons owned by battle players
     fun register() {
         CobblemonEvents.BATTLE_STARTED_PRE.subscribe { event ->
-            event.battle.actors.forEach(::recallActivePokemon)
+
+
+            event.battle.actors
+                .filterIsInstance<PlayerBattleActor>()
+                .forEach(::recallSafePlayerPokemon)
         }
     }
 
-    private fun recallActivePokemon(actor: BattleActor) {
+    private fun recallSafePlayerPokemon(actor: PlayerBattleActor) {
         actor.pokemonList.forEach { battlePokemon ->
             val pokemon = battlePokemon.effectedPokemon
+            val entity = pokemon.entity ?: return@forEach
 
-            // Pokemon.entity is only non-null while its state is active in-world.
-            // Do not gate this on entity.battleId: Cobblemon may have assigned the
-            // incoming battle ID before this PRE subscriber is invoked.
-            if (pokemon.entity != null) {
+
+            if (entity.isRemoved) {
+                return@forEach
+            }
+
+
+// mounted mons stay out of recall
+            if (entity.hasPassengers()) {
+                LOGGER.debug(
+                    "Skipping auto-recall for mounted Pokémon {} (entityId={}, passengers={})",
+                    pokemon.uuid,
+                    entity.id,
+                    entity.passengerList.size
+                )
+                return@forEach
+            }
+
+            try {
                 pokemon.recall()
+            } catch (e: Exception) {
+
+
+                LOGGER.warn(
+                    "Could not auto-recall Pokémon {} before battle: {}",
+                    pokemon.uuid,
+                    e.message,
+                    e
+                )
             }
         }
     }

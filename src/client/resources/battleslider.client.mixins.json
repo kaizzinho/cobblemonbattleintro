@@ -13,10 +13,15 @@
     "BattleChallengeNotificationHandlerMixin",
     "BattleMessageHandlerMixin",
     "SpawnExtraDataEntityHandlerMixin",
+    "KeyboardMixin",
+    "InGameHudMixin",
+    "BattleExtrasScreenRenderMixin",
+    "BattleMessagePaneMixin",
     "PartyOverlayMixin",
     "BattleOverlayMixin",
     "BattleGUIMixin",
     "EntityRendererMixin",
+    "PokemonEntityNameMixin",
     "PlayPosableAnimationHandlerMixin",
     "PlaySoundS2CPacketMixin"
   ],
@@ -25,5 +30,7 @@
   },
   "overwrites": {
     "requireAnnotations": true
-  }
+  },
+  "plugin": "com.kaizzinho.battleslider.mixin.client.BattleSliderMixinPlugin",
+  "refmap": "client-battleslider-refmap.json"
 }

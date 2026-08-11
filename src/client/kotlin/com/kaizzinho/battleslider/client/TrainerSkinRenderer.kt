@@ -15,36 +15,8 @@ object TrainerSkinRenderer {
 
     enum class Pose { PLAYER, OPPONENT }
 
-    /**
-     * Renders a fully static "paper doll" portrait built directly from the
-     * entity's skin texture -- head, body, and both arms, front-facing only
-     * -- instead of rendering the actual 3D entity model.
-     *
-     * Why: after several rounds fighting EntityRenderDispatcher/model-render
-     * internals (undocumented scissor/scale/rotation behavior, live
-     * animation state bleeding through, and eventually a render that
-     * produced nothing at all), it became clear the 3D pipeline is the
-     * wrong tool here. A player/trainer skin PNG already contains a fixed,
-     * pre-baked front-facing "pose" as UV-mapped rectangles (this is just
-     * how the standard 64x64 skin format works) -- we only need to sample
-     * those rectangles and draw them as flat 2D quads next to each other.
-     * This is fully static by construction (it's a texture file, there's no
-     * "live" entity state to bleed through), always front-facing (we only
-     * ever sample the front UV regions), and uses only drawTexture calls we
-     * already fully understand from the bar rendering itself.
-     *
-     * RCT trainers use this exact same code path: their renderer (confirmed
-     * via decompile) is a plain PlayerEntityRenderer + PlayerEntityModel, so
-     * their skin PNGs already follow the same standard layout as a real
-     * player skin.
-     *
-     * NOTE: assumes the modern 64x64 skin format (separate left/right
-     * arms/legs). Legacy 64x32 skins aren't handled -- extremely rare in
-     * practice at this point, but flag it if you hit one.
-     *
-     * x                   = horizontal center of the character's portrait slot
-     * barTop / barBottom  = the bar's vertical bounds (hard clip region)
-     */
+
+// flat skin fallback keeps the pose stable
     fun render(
         drawContext: DrawContext,
         skinId: Identifier?,
@@ -63,7 +35,7 @@ object TrainerSkinRenderer {
         val halfW = (barH * 0.9f).toInt()
         drawContext.enableScissor(x - halfW, barTop, x + halfW, barBottom)
 
-        // -- Skin-pixel-space dimensions (standard 64x64 skin layout) --
+
         val headSize = 8
         val bodyW = 8
         val bodyH = 12
@@ -71,8 +43,7 @@ object TrainerSkinRenderer {
         val contentH = headSize + bodyH
         val contentW = armW + bodyW + armW
 
-        // One number to change if the portrait reads too big/small relative
-        // to the bar.
+
         val pixelScale = (barH * 0.85f) / contentH
 
         val drawW = contentW * pixelScale
@@ -90,32 +61,23 @@ object TrainerSkinRenderer {
         val headY = startY.toInt()
         val bodyY = headY + headPx
 
-        /*
-         * Important: derive both arm positions from the already-rounded body
-         * rectangle. Previously the screen-left arm used startX.toInt()
-         * independently, while bodyX used a different floating-point sum.
-         * Those separate truncations could create a one-pixel gap.
-         */
+
         val rightArmX = bodyX - armWPx
         val leftArmX = bodyX + bodyWPx
 
-        // Right leg / left leg omitted deliberately -- a bust portrait
-        // (head + torso + arms) matches the classic VS-screen framing
-        // better than a full body crammed into a short bar.
 
-        // Screen-left / skin right arm (base + sleeve overlay)
         blit(drawContext, texture, rightArmX, bodyY, armWPx, bodyHPx, 44f, 20f, armW, bodyH)
         blit(drawContext, texture, rightArmX, bodyY, armWPx, bodyHPx, 44f, 36f, armW, bodyH)
 
-        // Screen-right / skin left arm (base + sleeve overlay)
+
         blit(drawContext, texture, leftArmX, bodyY, armWPx, bodyHPx, 36f, 52f, armW, bodyH)
         blit(drawContext, texture, leftArmX, bodyY, armWPx, bodyHPx, 52f, 52f, armW, bodyH)
 
-        // Body (base + jacket overlay)
+
         blit(drawContext, texture, bodyX, bodyY, bodyWPx, bodyHPx, 20f, 20f, bodyW, bodyH)
         blit(drawContext, texture, bodyX, bodyY, bodyWPx, bodyHPx, 20f, 36f, bodyW, bodyH)
 
-        // Head (base + hat overlay) -- drawn last so it's never occluded
+
         blit(drawContext, texture, headX, headY, headPx, headPx, 8f, 8f, headSize, headSize)
         blit(drawContext, texture, headX, headY, headPx, headPx, 40f, 8f, headSize, headSize)
 
@@ -137,7 +99,7 @@ object TrainerSkinRenderer {
         ctx.drawTexture(texture, x, y, w, h, u, v, regionW, regionH, 64, 64)
     }
 
-    /** Resolves a skin texture for non-player entities (RCT TrainerMob etc.) via their own renderer. */
+
     @Suppress("UNCHECKED_CAST")
     private fun resolveTexture(entity: LivingEntity): Identifier? {
         return try {
