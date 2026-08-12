@@ -130,9 +130,30 @@ The global **Animation Speed** setting scales the visual stages while the hold d
 
 ### Showcase
 
-![Full VS introduction](docs/images/full_vs_intro.png)
+#### Battle introduction
 
-![Gif demo](docs/images/battle_intro.gif)
+![Battle Slider animation](docs/images/battleslider.gif)
+
+#### Trainer battles
+
+![Trainer battle](docs/images/trainer_battle.png)
+
+#### WildBosses
+
+![WildBoss encounter](docs/images/wildbosses.png)
+
+#### Legendary and Mythical encounters
+
+![Legendary encounter](docs/images/legendary.png)
+
+#### 2D Pokémon portraits
+
+![2D sprite portrait](docs/images/2d sprites.png)
+
+#### In-game configuration
+
+![Mod Menu configuration](docs/images/modmenu.png)
+
 
 ### Requirements
 
@@ -910,9 +931,29 @@ A opção **Velocidade da animação** escala os estágios visuais enquanto o te
 
 ### Showcase
 
-![Full VS introduction](docs/images/full_vs_intro.png)
+#### Demo completa
 
-![Gif demo](docs/images/battle_intro.gif)
+![Battle Slider animation](docs/images/battleslider.gif)
+
+#### Batalha contra treinadores RCT
+
+![Trainer battle](docs/images/trainer_battle.png)
+
+#### Integração com WildBosses
+
+![WildBoss encounter](docs/images/wildbosses.png)
+
+#### Encontros de pokémon lendário/mítico
+
+![Legendary encounter](docs/images/legendary.png)
+
+#### Sprites 2D
+
+![2D sprite portrait](docs/images/2d sprites.png)
+
+#### Integração com ModMenu
+
+![Mod Menu configuration](docs/images/modmenu.png)
 
 ### Requisitos
 

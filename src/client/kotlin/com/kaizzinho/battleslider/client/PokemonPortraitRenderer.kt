@@ -4,7 +4,8 @@ import com.cobblemon.mod.common.entity.pokemon.PokemonEntity
 import com.kaizzinho.battleslider.client.config.BattleSliderConfig
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gui.DrawContext
-import net.minecraft.client.gui.screen.ingame.InventoryScreen
+import com.cobblemon.mod.common.client.gui.summary.widgets.ModelWidget
+import com.cobblemon.mod.common.client.render.models.blockbench.FloatingState
 import org.slf4j.LoggerFactory
 import java.util.Collections
 import kotlin.math.min
@@ -34,6 +35,17 @@ object PokemonPortraitRenderer {
         Collections.synchronizedSet(
             mutableSetOf<java.util.UUID>()
         )
+
+// keep profile state alive so cobblemon idle anims can move
+    private val profileAnimationStates =
+        Collections.synchronizedMap(
+            mutableMapOf<java.util.UUID, ProfileAnimationState>()
+        )
+
+    private data class ProfileAnimationState(
+        val state: FloatingState,
+        var lastRenderNs: Long
+    )
 
 // tries the picked portrait mode and fails soft
     fun render(
@@ -185,6 +197,156 @@ object PokemonPortraitRenderer {
         barTop: Int,
         barBottom: Int
     ): Boolean {
+        return tryRenderNativeProfile(
+            ctx,
+            entity,
+            centerX,
+            barTop,
+            barBottom
+        ) || tryRenderEntityFallback(
+            ctx,
+            entity,
+            centerX,
+            barTop,
+            barBottom
+        )
+    }
+
+// use cobblemon profile tuning for weird shaped mons
+    private fun tryRenderNativeProfile(
+        ctx: DrawContext,
+        entity: PokemonEntity,
+        centerX: Int,
+        barTop: Int,
+        barBottom: Int
+    ): Boolean {
+        return try {
+            val barHeight =
+                (barBottom - barTop).coerceAtLeast(1)
+
+            val padding =
+                (barHeight / 18).coerceAtLeast(3)
+
+            val slotHalfWidth =
+                (barHeight * 0.95f)
+                    .roundToInt()
+                    .coerceAtLeast(28)
+
+            val slotLeft = centerX - slotHalfWidth
+            val slotRight = centerX + slotHalfWidth
+            val slotTop = barTop + padding
+            val slotBottom = barBottom - padding
+
+            val screenWidth =
+                MinecraftClient.getInstance()
+                    .window
+                    .scaledWidth
+
+            val clipLeft =
+                slotLeft.coerceAtLeast(0)
+
+            val clipRight =
+                slotRight.coerceAtMost(screenWidth)
+
+            val slotWidth =
+                (clipRight - clipLeft)
+                    .coerceAtLeast(1)
+
+            val slotHeight =
+                (slotBottom - slotTop)
+                    .coerceAtLeast(1)
+
+            if (clipLeft >= clipRight || slotHeight <= 1) {
+                return true
+            }
+
+            val referenceSize = 66f
+            val referenceScale = 2f
+            val fit =
+                min(slotWidth, slotHeight) /
+                    referenceSize
+
+            val baseScale =
+                (referenceScale * fit * 0.88f)
+                    .coerceAtLeast(0.5f)
+
+            val offsetY =
+                -10.0 * fit * 0.88
+
+            val nowNs = System.nanoTime()
+            val animation = synchronized(profileAnimationStates) {
+                profileAnimationStates.getOrPut(entity.uuid) {
+                    ProfileAnimationState(
+                        state = FloatingState(),
+                        lastRenderNs = nowNs
+                    )
+                }
+            }
+
+            val deltaTicks =
+                (((nowNs - animation.lastRenderNs) / 1_000_000_000.0) * 20.0)
+                    .toFloat()
+                    .coerceIn(0f, 2f)
+
+            animation.lastRenderNs = nowNs
+
+            val widget = ModelWidget(
+                clipLeft,
+                slotTop,
+                slotWidth,
+                slotHeight,
+                entity.pokemon.asRenderablePokemon(),
+                baseScale,
+                35f,
+                offsetY,
+                false,
+                false
+            )
+
+            widget.state = animation.state
+
+            widget.render(
+                ctx,
+                -10000,
+                -10000,
+                deltaTicks
+            )
+
+            if (
+                BattleSliderConfig.debugLogging &&
+                loggedFits.add(entity.uuid)
+            ) {
+                logger.info(
+                    "[PokemonPortrait] native profile species={} scale={} slot={}x{}",
+                    entity.pokemon.species.name,
+                    "%.2f".format(baseScale),
+                    slotWidth,
+                    slotHeight
+                )
+            }
+
+            true
+        } catch (error: Throwable) {
+            if (BattleSliderConfig.debugLogging) {
+                logger.info(
+                    "[PokemonPortrait] native profile failed for {} and will use entity fallback: {}",
+                    entity.pokemon.species.name,
+                    error.message ?: error.javaClass.simpleName
+                )
+            }
+
+            false
+        }
+    }
+
+// old entity path stays as the backup
+    private fun tryRenderEntityFallback(
+        ctx: DrawContext,
+        entity: PokemonEntity,
+        centerX: Int,
+        barTop: Int,
+        barBottom: Int
+    ): Boolean {
         return try {
             val barHeight =
                 (barBottom - barTop).coerceAtLeast(1)
@@ -244,33 +406,18 @@ object PokemonPortraitRenderer {
                 availableHeight / modelHeight
 
             val maxTinyPokemonScale =
-                barHeight * 1.50f
+                barHeight * 1.15f
 
             val scale =
                 (
                     min(widthFit, heightFit) *
-                        0.82f
+                        0.78f
                     )
                     .coerceAtMost(
                         maxTinyPokemonScale
                     )
                     .coerceAtLeast(2f)
                     .roundToInt()
-
-            if (
-                BattleSliderConfig.debugLogging &&
-                loggedFits.add(entity.uuid)
-            ) {
-                logger.info(
-                    "[PokemonPortrait] species={} width={} height={} scale={} slot={}x{}",
-                    entity.pokemon.species.name,
-                    "%.2f".format(modelWidth),
-                    "%.2f".format(modelHeight),
-                    scale,
-                    slotRight - slotLeft,
-                    slotBottom - slotTop
-                )
-            }
 
             val centerXf =
                 (slotLeft + slotRight) / 2f
@@ -290,7 +437,7 @@ object PokemonPortraitRenderer {
             )
 
             try {
-                InventoryScreen.drawEntity(
+                net.minecraft.client.gui.screen.ingame.InventoryScreen.drawEntity(
                     ctx,
                     slotLeft,
                     slotTop,
@@ -298,7 +445,7 @@ object PokemonPortraitRenderer {
                     slotBottom,
                     scale,
                     0.0f,
-                    centerXf - inwardLook,
+                    centerXf + inwardLook,
                     centerYf,
                     entity
                 )

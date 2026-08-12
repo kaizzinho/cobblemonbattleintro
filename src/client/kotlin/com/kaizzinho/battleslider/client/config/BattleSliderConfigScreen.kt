@@ -317,7 +317,7 @@ class BattleSliderConfigScreen(
         }
             .dimensions(
                 optionX(),
-                rowY(2),
+                rowY(3),
                 optionWidth(),
                 20
             )
@@ -443,8 +443,13 @@ class BattleSliderConfigScreen(
         mouseY: Int,
         delta: Float
     ) {
-        renderBackground(context, mouseX, mouseY, delta)
-
+        context.fill(
+            0,
+            0,
+            width,
+            height,
+            0x66090A0E
+        )
 
         context.fill(
             panelLeft,
@@ -486,8 +491,6 @@ class BattleSliderConfigScreen(
             false
         )
 
-        super.render(context, mouseX, mouseY, delta)
-
         if (page == Page.PORTRAITS) {
             renderSpritePackStatus(context)
         }
@@ -495,6 +498,8 @@ class BattleSliderConfigScreen(
         if (page == Page.ADVANCED) {
             renderAdvancedInfo(context)
         }
+
+        super.render(context, mouseX, mouseY, delta)
 
         if (saveError) {
             drawCentered(
@@ -507,6 +512,19 @@ class BattleSliderConfigScreen(
                 true
             )
         }
+    }
+
+    override fun renderBackground(
+        context: DrawContext,
+        mouseX: Int,
+        mouseY: Int,
+        delta: Float
+    ) {
+// no blur so old screens never bleed through
+    }
+
+    override fun applyBlur(delta: Float) {
+// blur stays off for this screen
     }
 
     private fun renderSpritePackStatus(context: DrawContext) {
