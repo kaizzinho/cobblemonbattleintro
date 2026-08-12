@@ -148,7 +148,7 @@ The global **Animation Speed** setting scales the visual stages while the hold d
 
 #### 2D Pokémon portraits
 
-![2D sprite portrait](docs/images/2d sprites.png)
+![2D sprite portrait](docs/images/2d_sprites.png)
 
 #### In-game configuration
 
