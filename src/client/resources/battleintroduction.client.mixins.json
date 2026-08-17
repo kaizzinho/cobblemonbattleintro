@@ -1,0 +1,36 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.kaizzinho.battleintroduction.mixin.client",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "BattleInitializeHandlerMixin",
+    "BattleSetTeamPokemonHandlerMixin",
+    "BattleQueueRequestHandlerMixin",
+    "BattleSwitchPokemonHandlerMixin",
+    "BattleReplacePokemonHandlerMixin",
+    "BattleMakeChoiceHandlerMixin",
+    "BattleChallengeNotificationHandlerMixin",
+    "BattleMessageHandlerMixin",
+    "SpawnExtraDataEntityHandlerMixin",
+    "KeyboardMixin",
+    "InGameHudMixin",
+    "BattleExtrasScreenRenderMixin",
+    "BattleMessagePaneMixin",
+    "PartyOverlayMixin",
+    "BattleOverlayMixin",
+    "BattleGUIMixin",
+    "EntityRendererMixin",
+    "PokemonEntityNameMixin",
+    "PlayPosableAnimationHandlerMixin",
+    "PlaySoundS2CPacketMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "overwrites": {
+    "requireAnnotations": true
+  },
+  "plugin": "com.kaizzinho.battleintroduction.mixin.client.BattleIntroductionMixinPlugin",
+  "refmap": "client-battleintroduction-refmap.json"
+}

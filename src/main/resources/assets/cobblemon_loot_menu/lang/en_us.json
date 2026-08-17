@@ -1,0 +1,20 @@
+{
+  "screen.cobblemon_loot_menu.title": "%1$s defeated! Loot Dropped:",
+  "screen.cobblemon_loot_menu.drop_all": "Drop All",
+  "screen.cobblemon_loot_menu.discard_all": "Discard All",
+  "screen.cobblemon_loot_menu.take_all": "Take All",
+  "screen.cobblemon_loot_menu.close": "Close",
+  "screen.cobblemon_loot_menu.count": "%1$s left · %2$s selected",
+  "screen.cobblemon_loot_menu.click_hint": "Click: select",
+  "screen.cobblemon_loot_menu.take_one_hint": "Shift/right-click: take one",
+  "screen.cobblemon_loot_menu.no_loot": "No loot remaining",
+  "screen.cobblemon_loot_menu.take_selected": "Take Selected",
+  "screen.cobblemon_loot_menu.count_with_queue": "%1$s left · %2$s selected · queue: %3$s",
+  "screen.cobblemon_loot_menu.test_title": "Loot Menu Test",
+  "message.cobblemon_loot_menu.inventory_overflow": "Inventory full: %1$s stacks (%2$s items) were dropped near you.",
+  "command.cobblemon_loot_menu.test_result": "Queued %1$s test stacks (%2$s).",
+  "command.cobblemon_loot_menu.pending_none": "No pending loot sessions.",
+  "command.cobblemon_loot_menu.pending_status": "Queue: %1$s · unresolved: %2$s · expires: %3$ss · source: %4$s · session: %5$s",
+  "command.cobblemon_loot_menu.compat_wildbosses": "WildBosses — installed: %1$s · enabled: %2$s · registered: %3$s · awards: %4$s · stashes: %5$s · merges: %6$s · last: %7$s",
+  "command.cobblemon_loot_menu.compat_rct": "RCT — installed: %1$s · enabled: %2$s · registered: %3$s · trainer wins: %4$s · captures: %5$s · watches: %6$s · empty: %7$s · last trainer: %8$s · last stack: %9$s"
+}

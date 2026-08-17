@@ -1,34 +1,36 @@
 {
   "schemaVersion": 1,
-  "id": "kaizzinhobattleslider",
+  "id": "cobblemonbattleintroduction",
   "version": "${version}",
-  "name": "Cobblemon Battle Slider",
-  "description": "Pokémon-style VS battle slider animation for Cobblemon",
+  "name": "Cobblemon Battle Introduction",
+  "description": "Adds Pokémon-style VS battle introductions to Cobblemon with animated 3D portraits, optional 2D sprites, trainer battles, PvP, WildBoss, Legendary and Mythical encounters, and extensive customization.",
   "authors": [
-    "Kaizzinho"
+    "kaizzinho"
   ],
-  "contact": {},
-  "license": "Battle Slider Source-Available Permission License 1.0",
-  "icon": "assets/battleslider/icon.png",
+  "contact": {
+    "sources": "https://github.com/arthurc0sme/kaizzinhobattleslider",
+    "issues": "https://github.com/arthurc0sme/kaizzinhobattleslider/issues"
+  },
+  "license": "Battle Introduction Source-Available Permission License 1.0",
   "environment": "*",
   "entrypoints": {
     "fabric-datagen": [
-      "com.kaizzinho.battleslider.client.BattlesliderDataGenerator"
+      "com.kaizzinho.battleintroduction.client.BattleIntroductionDataGenerator"
     ],
     "client": [
-      "com.kaizzinho.battleslider.client.BattlesliderClient"
+      "com.kaizzinho.battleintroduction.client.BattleIntroductionClient"
     ],
     "main": [
-      "com.kaizzinho.battleslider.Battleslider"
+      "com.kaizzinho.battleintroduction.BattleIntroduction"
     ],
     "modmenu": [
-      "com.kaizzinho.battleslider.client.compat.BattlesliderModMenuIntegration"
+      "com.kaizzinho.battleintroduction.client.compat.BattleIntroductionModMenuIntegration"
     ]
   },
   "mixins": [
-    "battleslider.mixins.json",
+    "battleintroduction.mixins.json",
     {
-      "config": "battleslider.client.mixins.json",
+      "config": "battleintroduction.client.mixins.json",
       "environment": "client"
     }
   ],
@@ -36,10 +38,15 @@
     "fabricloader": ">=0.16.0",
     "fabric-api": "*",
     "fabric-language-kotlin": "*",
-    "cobblemon": "*",
+    "cobblemon": ">=1.7.3 <1.8.0",
     "minecraft": "~1.21.1"
   },
   "suggests": {
-    "modmenu": ">=11.0.0"
-  }
+    "modmenu": ">=11.0.0",
+    "wildbosses": "*",
+    "rctmod": "*"
+  },
+  "provides": [
+    "kaizzinhobattleslider"
+  ]
 }

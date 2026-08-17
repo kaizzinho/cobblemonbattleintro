@@ -1,4 +1,4 @@
-# Cobblemon Battle Slider ⚔️
+# Cobblemon Battle Introduction ⚔️
 
 ![Status](https://img.shields.io/badge/status-release%20candidate-yellow)
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-62B47A?logo=minecraft&logoColor=white)
@@ -15,7 +15,7 @@
 
 ### Overview
 
-**Cobblemon Battle Slider** adds a Pokémon-inspired **VS battle introduction** to Cobblemon.
+**Cobblemon Battle Introduction** adds a Pokémon-inspired **VS battle introduction** to Cobblemon.
 
 The mod presents supported encounters with animated battle bars, a VS emblem, trainer or Pokémon portraits, names, party Poké Balls, particles, transition sounds, and staged Pokémon send-outs while keeping Cobblemon's normal battle system intact.
 
@@ -33,7 +33,7 @@ The visual presentation runs on the client. A small common-side handler also saf
 
 ### What it does
 
-Battle Slider temporarily stages selected client battle packets while the VS animation plays.
+Battle Introduction temporarily stages selected client battle packets while the VS animation plays.
 
 When the intro finishes, or when the player skips it, the queued actions are replayed in a controlled order:
 
@@ -132,7 +132,7 @@ The global **Animation Speed** setting scales the visual stages while the hold d
 
 #### Battle introduction
 
-![Battle Slider animation](docs/images/battleslider.gif)
+![Battle Introduction animation](docs/images/battleslider.gif)
 
 #### Trainer battles
 
@@ -171,7 +171,7 @@ The global **Animation Speed** setting scales the visual stages while the hold d
 - **Mod Menu `11.0.0+`** — adds the in-game configuration screen.
 - **Radical Cobblemon Trainers** — adds trainer entity metadata, skins, names, trainer roles, and type colors.
 - **WildBosses** — enables the dedicated Boss encounter presentation.
-- **Cobblemon Battle Extras** — Battle Slider conditionally suppresses its battle UI elements during the intro when detected.
+- **Cobblemon Battle Extras** — Battle Introduction conditionally suppresses its battle UI elements during the intro when detected.
 - **Compatible Pokémon sprite resource pack** — enables external 2D Pokémon portraits and fallback rendering.
 
 None of these are required for the base trainer/PvP presentation.
@@ -261,13 +261,13 @@ Current Boss base colors:
 
 Rare intentionally uses teal/aqua so it does not visually collide with the player's blue side.
 
-The integration is soft. Battle Slider loads normally without WildBosses.
+The integration is soft. Battle Introduction loads normally without WildBosses.
 
-When using a WildBosses build that recognizes the Battle Slider mod id `kaizzinhobattleslider`, WildBosses can suppress its own encounter title/subtitle so the two presentations do not overlap.
+WildBosses integrations should detect the Battle Introduction mod id `cobblemonbattleintroduction`. The legacy id `kaizzinhobattleslider` is temporarily provided as an alias so existing integrations continue to recognize the mod during the rebrand.
 
 ### Legendary and Mythical wild encounters
 
-Battle Slider also supports ordinary wild Legendary and Mythical Pokémon without requiring WildBosses.
+Battle Introduction also supports ordinary wild Legendary and Mythical Pokémon without requiring WildBosses.
 
 Detection uses Cobblemon species labels:
 
@@ -360,14 +360,16 @@ This avoids maintaining a large species-specific scale table.
 
 The optional 2D system uses Minecraft's active `ResourceManager`.
 
-Battle Slider does **not** need to know the resource-pack filename.
+Battle Introduction does **not** need to know the resource-pack filename.
 
 Any enabled resource pack can provide:
 
 ```text
-assets/battleslider/textures/pokemon/front/<dex>.png
-assets/battleslider/textures/pokemon/shiny/<dex>.png
+assets/battleintroduction/textures/pokemon/front/<dex>.png
+assets/battleintroduction/textures/pokemon/shiny/<dex>.png
 ```
+
+For transition compatibility, existing packs that still use `assets/battleslider/...` are also detected. New packs should use the `battleintroduction` namespace.
 
 Both naming styles are accepted:
 
@@ -379,8 +381,8 @@ Both naming styles are accepted:
 Examples:
 
 ```text
-assets/battleslider/textures/pokemon/front/0150.png
-assets/battleslider/textures/pokemon/shiny/0150.png
+assets/battleintroduction/textures/pokemon/front/0150.png
+assets/battleintroduction/textures/pokemon/shiny/0150.png
 ```
 
 The resolver uses:
@@ -399,7 +401,7 @@ If both 3D and 2D rendering fail, the intro continues with no Pokémon portrait.
 
 #### Sprite artwork distribution
 
-Battle Slider itself does not need to bundle Pokémon sprite artwork.
+Battle Introduction itself does not need to bundle Pokémon sprite artwork.
 
 This allows the mod JAR to contain the rendering support while sprite artwork can be provided independently through a normal Minecraft resource pack.
 
@@ -409,7 +411,7 @@ Resource-pack creators are responsible for the rights and distribution terms of 
 
 RCT support is optional and reflection-based.
 
-Battle Slider can resolve:
+Battle Introduction can resolve:
 
 - trainer entity;
 - trainer ID;
@@ -448,7 +450,7 @@ Each trainer side can show up to six party slots.
 
 Occupied slots use the Pokémon's actual capture ball when it can be resolved.
 
-Empty slots use Battle Slider's inactive ball texture.
+Empty slots use Battle Introduction's inactive ball texture.
 
 The row enters with a staggered animation and a synchronized lineup sound.
 
@@ -456,7 +458,7 @@ WildBosses and Legendary/Mythical opponent sides replace the opponent party row 
 
 ### Auto recall
 
-Before battle, Battle Slider checks only `PlayerBattleActor` Pokémon.
+Before battle, Battle Introduction checks only `PlayerBattleActor` Pokémon.
 
 An active player-owned Pokémon is recalled when safe.
 
@@ -481,7 +483,7 @@ Change it through:
 Options
 → Controls
 → Key Binds
-→ Cobblemon Battle Slider
+→ Cobblemon Battle Introduction
 → Skip Battle Intro
 ```
 
@@ -493,9 +495,9 @@ Skipping still reaches the normal packet-completion path.
 
 Mod Menu is a **soft dependency**.
 
-When installed, Battle Slider exposes a centered vanilla-style configuration screen through Mod Menu.
+When installed, Battle Introduction exposes a centered vanilla-style configuration screen through Mod Menu.
 
-When Mod Menu is absent, Battle Slider still loads normally and `config/battleslider.json` remains available.
+When Mod Menu is absent, Battle Introduction still loads normally and `config/battleintroduction.json` remains available.
 
 The menu is split into:
 
@@ -590,7 +592,7 @@ Resetting presentation defaults intentionally preserves the advanced RCT role ov
 The same config backs both Mod Menu and manual JSON configuration:
 
 ```text
-config/battleslider.json
+config/battleintroduction.json
 ```
 
 Current default values:
@@ -630,7 +632,7 @@ holdDurationMs       250 to 2500
 teamBallLineupVolume 0.0 to 2.0
 ```
 
-If the JSON is malformed, Battle Slider moves the invalid file to a timestamped `.broken` backup and recreates clean defaults.
+If the JSON is malformed, Battle Introduction moves the invalid file to a timestamped `.broken` backup and recreates clean defaults.
 
 #### RCT exact role overrides
 
@@ -669,13 +671,13 @@ These overrides are primarily intended for unusual or inconsistent trainer datap
 
 ### Source availability and usage permission
 
-The Battle Slider source code is publicly available for transparency, review, learning, issue diagnosis, private development, and contributions.
+The Battle Introduction source code is publicly available for transparency, review, learning, issue diagnosis, private development, and contributions.
 
-Public access to the source code does **not** grant automatic permission to publicly redistribute, publish, deploy, or operate Battle Slider.
+Public access to the source code does **not** grant automatic permission to publicly redistribute, publish, deploy, or operate Battle Introduction.
 
 #### Permission required
 
-**Prior written permission is required for every public modpack and every public multiplayer server using Battle Slider.**
+**Prior written permission is required for every public modpack and every public multiplayer server using Battle Introduction.**
 
 Prior written permission from **Kaizzinho** is also required for:
 
@@ -696,7 +698,7 @@ You may:
 - privately modify and compile the source for personal development or testing;
 - open issues and submit pull requests;
 - use the official unmodified release in your own personal singleplayer installation;
-- use Battle Slider in a genuinely private, nonpublic modpack or private multiplayer server for a closed group, as long as it is not publicly advertised, publicly distributed, sold, or monetized.
+- use Battle Introduction in a genuinely private, nonpublic modpack or private multiplayer server for a closed group, as long as it is not publicly advertised, publicly distributed, sold, or monetized.
 
 A public fork or visible copy of the repository does not by itself grant permission to distribute builds or publicly deploy the mod.
 
@@ -704,7 +706,7 @@ If a private modpack or private server later becomes public, permission must be 
 
 See [LICENSE](LICENSE) for the complete terms.
 
-> **Note:** because public deployment and public redistribution require authorization, Battle Slider is source-available rather than OSI-approved open-source software.
+> **Note:** because public deployment and public redistribution require authorization, Battle Introduction is source-available rather than OSI-approved open-source software.
 
 ### Installation
 
@@ -714,7 +716,7 @@ See [LICENSE](LICENSE) for the complete terms.
 2. Install Fabric API.
 3. Install Fabric Language Kotlin.
 4. Install Cobblemon `1.7.3`.
-5. Place the Battle Slider `.jar` in `mods`.
+5. Place the Battle Introduction `.jar` in `mods`.
 6. Launch the game.
 
 #### Multiplayer
@@ -739,7 +741,7 @@ Current target:
 | Java | `21` |
 | Mod Menu | optional `11.0.0+` |
 
-Battle Slider does not replace or fork Cobblemon's battle system.
+Battle Introduction does not replace or fork Cobblemon's battle system.
 
 The client mixins temporarily suppress Cobblemon battle UI elements while the intro is active and restore normal rendering afterward.
 
@@ -769,7 +771,7 @@ The compiled JAR is generated in:
 build/libs/
 ```
 
-The current source includes a Mod Menu entrypoint. Mod Menu should be available to the development build as a compile/development dependency, but it must not be bundled into the released Battle Slider JAR.
+The current source includes a Mod Menu entrypoint. Mod Menu should be available to the development build as a compile/development dependency, but it must not be bundled into the released Battle Introduction JAR.
 
 For release validation, test the built JAR in a clean instance and then in the intended modpack/server environment.
 
@@ -796,11 +798,11 @@ For release validation, test the built JAR in a clean instance and then in the i
 
 ### License and usage terms
 
-Battle Slider is distributed under the **Battle Slider Source-Available Permission License 1.0**.
+Battle Introduction is distributed under the **Battle Introduction Source-Available Permission License 1.0**.
 
 The source code is publicly visible for learning, review, private development, and contributions.
 
-**Prior written permission is required for every public modpack and every public multiplayer server using Battle Slider.**
+**Prior written permission is required for every public modpack and every public multiplayer server using Battle Introduction.**
 
 Public redistribution, public compiled builds, public modified or derivative versions, mirrors, launcher bundles, and commercial public use also require prior written permission from **Kaizzinho**.
 
@@ -808,7 +810,7 @@ Personal singleplayer use and genuinely private, nonpublic modpacks or servers a
 
 See [LICENSE](LICENSE) for the complete terms.
 
-Pokémon, Pokémon names, and related intellectual property belong to their respective rights holders. Battle Slider does not need to distribute Pokémon sprite artwork as part of the mod JAR; compatible sprite artwork can be supplied separately through resource packs.
+Pokémon, Pokémon names, and related intellectual property belong to their respective rights holders. Battle Introduction does not need to distribute Pokémon sprite artwork as part of the mod JAR; compatible sprite artwork can be supplied separately through resource packs.
 
 ---
 
@@ -816,7 +818,7 @@ Pokémon, Pokémon names, and related intellectual property belong to their resp
 
 ### Visão geral
 
-**Cobblemon Battle Slider** adiciona ao Cobblemon uma **introdução de batalha VS inspirada em Pokémon**.
+**Cobblemon Battle Introduction** adiciona ao Cobblemon uma **introdução de batalha VS inspirada em Pokémon**.
 
 O mod apresenta encontros compatíveis com barras animadas, emblema VS, retratos de treinadores ou Pokémon, nomes, Poké Bolas das parties, partículas, sons de transição e envio escalonado dos Pokémon, mantendo o sistema normal de batalha do Cobblemon.
 
@@ -834,7 +836,7 @@ A parte visual é executada no cliente. Um pequeno handler comum também recolhe
 
 ### Como funciona
 
-O Battle Slider segura temporariamente alguns pacotes de batalha no cliente enquanto a animação VS é exibida.
+O Battle Introduction segura temporariamente alguns pacotes de batalha no cliente enquanto a animação VS é exibida.
 
 Quando a introdução termina, ou quando o jogador pula a animação, as ações são reproduzidas em ordem controlada:
 
@@ -933,7 +935,7 @@ A opção **Velocidade da animação** escala os estágios visuais enquanto o te
 
 #### Demo completa
 
-![Battle Slider animation](docs/images/battleslider.gif)
+![Battle Introduction animation](docs/images/battleslider.gif)
 
 #### Batalha contra treinadores RCT
 
@@ -971,7 +973,7 @@ A opção **Velocidade da animação** escala os estágios visuais enquanto o te
 - **Mod Menu `11.0.0+`** — adiciona a tela de configuração dentro do jogo.
 - **Radical Cobblemon Trainers** — fornece metadados, skins, nomes, roles e cores dos treinadores.
 - **WildBosses** — ativa a apresentação dedicada de Boss.
-- **Cobblemon Battle Extras** — o Battle Slider esconde condicionalmente seus elementos durante a intro quando o mod é detectado.
+- **Cobblemon Battle Extras** — o Battle Introduction esconde condicionalmente seus elementos durante a intro quando o mod é detectado.
 - **Resource pack compatível de sprites de Pokémon** — habilita retratos 2D externos e fallback.
 
 Nenhuma dessas integrações é necessária para a apresentação base de treinador/PvP.
@@ -1061,13 +1063,13 @@ Cores base atuais:
 
 Rare usa teal/aqua de propósito para não se confundir com o azul do jogador.
 
-A integração é soft. O Battle Slider inicia normalmente sem o WildBosses.
+A integração é soft. O Battle Introduction inicia normalmente sem o WildBosses.
 
-Ao usar uma versão do WildBosses que reconhece o mod id `kaizzinhobattleslider`, o WildBosses pode esconder seu próprio title/subtitle de encontro para as duas apresentações não aparecerem juntas.
+Integrações com WildBosses devem detectar o mod id `cobblemonbattleintroduction`. O id antigo `kaizzinhobattleslider` é fornecido temporariamente como alias para manter integrações existentes funcionando durante o rebrand.
 
 ### Encontros Lendários e Míticos
 
-Battle Slider também suporta Pokémon Lendários e Míticos selvagens comuns sem exigir WildBosses.
+Battle Introduction também suporta Pokémon Lendários e Míticos selvagens comuns sem exigir WildBosses.
 
 A detecção usa os labels das species do Cobblemon:
 
@@ -1160,13 +1162,13 @@ Isso evita uma tabela manual enorme por species.
 
 O sistema 2D usa o `ResourceManager` ativo do Minecraft.
 
-O Battle Slider não precisa saber o nome do resource pack.
+O Battle Introduction não precisa saber o nome do resource pack.
 
 Qualquer pack habilitado pode fornecer:
 
 ```text
-assets/battleslider/textures/pokemon/front/<dex>.png
-assets/battleslider/textures/pokemon/shiny/<dex>.png
+assets/battleintroduction/textures/pokemon/front/<dex>.png
+assets/battleintroduction/textures/pokemon/shiny/<dex>.png
 ```
 
 Os dois padrões de nome são aceitos:
@@ -1179,8 +1181,8 @@ Os dois padrões de nome são aceitos:
 Exemplos:
 
 ```text
-assets/battleslider/textures/pokemon/front/0150.png
-assets/battleslider/textures/pokemon/shiny/0150.png
+assets/battleintroduction/textures/pokemon/front/0150.png
+assets/battleintroduction/textures/pokemon/shiny/0150.png
 ```
 
 A resolução usa:
@@ -1199,7 +1201,7 @@ Se 3D e 2D falharem, a intro continua sem retrato.
 
 #### Distribuição dos sprites
 
-O Battle Slider não precisa incluir artwork de Pokémon dentro do JAR.
+O Battle Introduction não precisa incluir artwork de Pokémon dentro do JAR.
 
 O mod pode distribuir apenas o suporte de renderização enquanto os sprites são fornecidos separadamente por um resource pack normal.
 
@@ -1209,7 +1211,7 @@ Quem cria ou distribui o resource pack é responsável pelos direitos e termos d
 
 O suporte ao RCT é opcional e reflection-based.
 
-O Battle Slider pode resolver:
+O Battle Introduction pode resolver:
 
 - entidade do treinador;
 - trainer ID;
@@ -1246,7 +1248,7 @@ Cada lado pode mostrar até seis slots.
 
 Slots ocupados usam a Poké Bola real de captura quando ela pode ser resolvida.
 
-Slots vazios usam a textura inativa do Battle Slider.
+Slots vazios usam a textura inativa do Battle Introduction.
 
 A linha entra com animação staggered e som sincronizado.
 
@@ -1254,7 +1256,7 @@ Bosses e Lendários/Míticos substituem a linha do oponente por informações do
 
 ### Auto recall
 
-Antes da batalha, o Battle Slider verifica apenas `PlayerBattleActor`.
+Antes da batalha, o Battle Introduction verifica apenas `PlayerBattleActor`.
 
 Um Pokémon ativo pertencente ao jogador é recolhido quando seguro.
 
@@ -1279,7 +1281,7 @@ Altere em:
 Opções
 → Controles
 → Teclas
-→ Cobblemon Battle Slider
+→ Cobblemon Battle Introduction
 → Pular introdução da batalha
 ```
 
@@ -1291,9 +1293,9 @@ Pular a intro ainda usa o fluxo normal de conclusão dos pacotes.
 
 Mod Menu é uma **soft dependency**.
 
-Quando instalado, o Battle Slider disponibiliza uma tela centralizada usando widgets vanilla.
+Quando instalado, o Battle Introduction disponibiliza uma tela centralizada usando widgets vanilla.
 
-Sem Mod Menu, o Battle Slider continua funcionando normalmente e `config/battleslider.json` permanece disponível.
+Sem Mod Menu, o Battle Introduction continua funcionando normalmente e `config/battleintroduction.json` permanece disponível.
 
 A tela é dividida em:
 
@@ -1382,7 +1384,7 @@ O reset de apresentação preserva de propósito o mapa avançado de overrides d
 O Mod Menu e a configuração manual usam o mesmo arquivo:
 
 ```text
-config/battleslider.json
+config/battleintroduction.json
 ```
 
 Valores padrão atuais:
@@ -1422,7 +1424,7 @@ holdDurationMs       250 até 2500
 teamBallLineupVolume 0.0 até 2.0
 ```
 
-Se o JSON estiver inválido, o Battle Slider move o arquivo quebrado para um backup `.broken` com timestamp e recria os padrões.
+Se o JSON estiver inválido, o Battle Introduction move o arquivo quebrado para um backup `.broken` com timestamp e recria os padrões.
 
 #### Overrides exatos do RCT
 
@@ -1459,13 +1461,13 @@ rival
 
 ### Disponibilidade do código e permissão de uso
 
-O código-fonte do Battle Slider fica disponível publicamente para transparência, análise, aprendizado, diagnóstico de problemas, desenvolvimento privado e contribuições.
+O código-fonte do Battle Introduction fica disponível publicamente para transparência, análise, aprendizado, diagnóstico de problemas, desenvolvimento privado e contribuições.
 
-Ter acesso público ao código **não** concede automaticamente permissão para redistribuir, publicar, disponibilizar ou operar o Battle Slider publicamente.
+Ter acesso público ao código **não** concede automaticamente permissão para redistribuir, publicar, disponibilizar ou operar o Battle Introduction publicamente.
 
 #### Permissão obrigatória
 
-**É necessária autorização prévia por escrito para todo modpack público e todo servidor multiplayer público que utilizar o Battle Slider.**
+**É necessária autorização prévia por escrito para todo modpack público e todo servidor multiplayer público que utilizar o Battle Introduction.**
 
 Também é necessária autorização prévia de **Kaizzinho** para:
 
@@ -1486,7 +1488,7 @@ Você pode:
 - modificar e compilar o código de forma privada para desenvolvimento ou testes pessoais;
 - abrir issues e enviar pull requests;
 - usar a versão oficial sem modificações em sua própria instalação singleplayer pessoal;
-- usar o Battle Slider em um modpack realmente privado ou servidor multiplayer privado para um grupo fechado, desde que não seja anunciado publicamente, distribuído publicamente, vendido ou monetizado.
+- usar o Battle Introduction em um modpack realmente privado ou servidor multiplayer privado para um grupo fechado, desde que não seja anunciado publicamente, distribuído publicamente, vendido ou monetizado.
 
 Um fork público ou uma cópia visível do repositório não concede por si só permissão para distribuir builds ou disponibilizar o mod publicamente.
 
@@ -1494,7 +1496,7 @@ Se um modpack ou servidor privado se tornar público depois, a autorização dev
 
 Consulte [LICENSE](LICENSE) para os termos completos.
 
-> **Nota:** como a distribuição e o uso público exigem autorização, o Battle Slider é um projeto de código-fonte disponível e não software open source aprovado pela OSI.
+> **Nota:** como a distribuição e o uso público exigem autorização, o Battle Introduction é um projeto de código-fonte disponível e não software open source aprovado pela OSI.
 
 ### Instalação
 
@@ -1504,7 +1506,7 @@ Consulte [LICENSE](LICENSE) para os termos completos.
 2. Instale Fabric API.
 3. Instale Fabric Language Kotlin.
 4. Instale Cobblemon `1.7.3`.
-5. Coloque o `.jar` do Battle Slider em `mods`.
+5. Coloque o `.jar` do Battle Introduction em `mods`.
 6. Inicie o jogo.
 
 #### Multiplayer
@@ -1529,7 +1531,7 @@ Target atual:
 | Java | `21` |
 | Mod Menu | opcional `11.0.0+` |
 
-O Battle Slider não substitui nem cria um fork do sistema de batalha do Cobblemon.
+O Battle Introduction não substitui nem cria um fork do sistema de batalha do Cobblemon.
 
 Os mixins client-side escondem temporariamente elementos da UI de batalha enquanto a intro está ativa e restauram a renderização normal depois.
 
@@ -1559,7 +1561,7 @@ O JAR compilado será gerado em:
 build/libs/
 ```
 
-O código atual possui um entrypoint do Mod Menu. O Mod Menu deve estar disponível como dependência de compile/desenvolvimento, mas não deve ser incluído dentro do JAR final do Battle Slider.
+O código atual possui um entrypoint do Mod Menu. O Mod Menu deve estar disponível como dependência de compile/desenvolvimento, mas não deve ser incluído dentro do JAR final do Battle Introduction.
 
 Para validar uma release, teste o JAR em uma instância limpa e depois no modpack/servidor alvo.
 
@@ -1586,11 +1588,11 @@ Para validar uma release, teste o JAR em uma instância limpa e depois no modpac
 
 ### Licença e termos de uso
 
-O Battle Slider é distribuído sob a **Battle Slider Source-Available Permission License 1.0**.
+O Battle Introduction é distribuído sob a **Battle Introduction Source-Available Permission License 1.0**.
 
 O código-fonte fica visível publicamente para aprendizado, análise, desenvolvimento privado e contribuições.
 
-**É necessária autorização prévia por escrito para todo modpack público e todo servidor multiplayer público que utilizar o Battle Slider.**
+**É necessária autorização prévia por escrito para todo modpack público e todo servidor multiplayer público que utilizar o Battle Introduction.**
 
 Redistribuição pública, builds públicas compiladas a partir do código, versões modificadas ou derivadas públicas, mirrors, pacotes de launcher e uso público comercial também exigem autorização prévia de **Kaizzinho**.
 
@@ -1598,4 +1600,4 @@ Uso pessoal em singleplayer e modpacks ou servidores realmente privados e não p
 
 Consulte [LICENSE](LICENSE) para os termos completos.
 
-Pokémon, nomes de Pokémon e propriedades relacionadas pertencem aos seus respectivos detentores. O Battle Slider não precisa distribuir sprites de Pokémon dentro do JAR; artwork compatível pode ser fornecida separadamente por resource packs.
+Pokémon, nomes de Pokémon e propriedades relacionadas pertencem aos seus respectivos detentores. O Battle Introduction não precisa distribuir sprites de Pokémon dentro do JAR; artwork compatível pode ser fornecida separadamente por resource packs.

@@ -5,4 +5,4 @@ pluginManagement {
     }
 }
 
-rootProject.name = "battleslider"
+rootProject.name = "cobblemon-battle-introduction"

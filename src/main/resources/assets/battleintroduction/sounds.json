@@ -1,0 +1,11 @@
+{
+  "team_ball_lineup": {
+    "subtitle": "subtitles.battleintroduction.team_ball_lineup",
+    "sounds": [
+      {
+        "name": "battleintroduction:ui/team_ball_lineup",
+        "stream": false
+      }
+    ]
+  }
+}
