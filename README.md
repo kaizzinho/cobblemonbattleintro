@@ -951,7 +951,7 @@ A opção **Velocidade da animação** escala os estágios visuais enquanto o te
 
 #### Sprites 2D
 
-![2D sprite portrait](docs/images/2d sprites.png)
+![2D sprite portrait](docs/images/2d_sprites.png)
 
 #### Integração com ModMenu
 
