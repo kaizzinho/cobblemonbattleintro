@@ -2,9 +2,9 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/battleslider.client.iml" filepath="$PROJECT_DIR$/.idea/modules/battleslider.client.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/battleslider.main.iml" filepath="$PROJECT_DIR$/.idea/modules/battleslider.main.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/battleslider.test.iml" filepath="$PROJECT_DIR$/.idea/modules/battleslider.test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/cobblemon-battle-introduction.client.iml" filepath="$PROJECT_DIR$/.idea/modules/cobblemon-battle-introduction.client.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/cobblemon-battle-introduction.main.iml" filepath="$PROJECT_DIR$/.idea/modules/cobblemon-battle-introduction.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/cobblemon-battle-introduction.test.iml" filepath="$PROJECT_DIR$/.idea/modules/cobblemon-battle-introduction.test.iml" />
     </modules>
   </component>
 </project>
