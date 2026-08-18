@@ -32,5 +32,5 @@
     "requireAnnotations": true
   },
   "plugin": "com.kaizzinho.battleintroduction.mixin.client.BattleIntroductionMixinPlugin",
-  "refmap": "client-battleintroduction-refmap.json"
+  "refmap": "client-cobblemon-battle-introduction-refmap.json"
 }
