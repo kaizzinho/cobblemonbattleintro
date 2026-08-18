@@ -176,6 +176,14 @@ The global **Animation Speed** setting scales the visual stages while the hold d
 
 None of these are required for the base trainer/PvP presentation.
 
+### Recommended immersion setup
+
+For the best overall experience, I **highly recommend using Cobblemon Battle Introduction together with CobbleTunes and adapted resource packs for both mods**.
+
+For CobbleTunes, use a resource pack that provides the appropriate `.ogg` battle music files so the encounter can start with matching Pokémon-style music. For Battle Introduction, use a compatible resource pack that provides matching 2D Pokémon portraits and other presentation assets. Used together, the music, portraits, and VS animation make the transition feel much closer to a complete Pokémon-style battle introduction instead of a standalone visual effect.
+
+These are still optional and Battle Introduction works without them.
+
 ### Supported encounter types
 
 #### Trainer battles
@@ -977,6 +985,14 @@ A opção **Velocidade da animação** escala os estágios visuais enquanto o te
 - **Resource pack compatível de sprites de Pokémon** — habilita retratos 2D externos e fallback.
 
 Nenhuma dessas integrações é necessária para a apresentação base de treinador/PvP.
+
+### Configuração recomendada para maior imersão
+
+Para a melhor experiência geral, eu **recomendo fortemente usar o Cobblemon Battle Introduction junto com o CobbleTunes e resource packs adaptados para os dois mods**.
+
+Para o CobbleTunes, use um resource pack que forneça os arquivos de música `.ogg` adequados para que a batalha comece com uma trilha no estilo Pokémon. Para o Battle Introduction, use um resource pack compatível que forneça retratos 2D dos Pokémon e outros assets de apresentação. Usados em conjunto, música, retratos e animação VS fazem a transição parecer muito mais próxima de uma introdução completa de batalha Pokémon em vez de apenas um efeito visual isolado.
+
+Esses complementos continuam opcionais e o Battle Introduction funciona normalmente sem eles.
 
 ### Tipos de encontro
 
