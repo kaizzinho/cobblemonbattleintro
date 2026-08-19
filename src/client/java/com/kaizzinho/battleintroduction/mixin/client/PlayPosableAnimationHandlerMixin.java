@@ -21,6 +21,13 @@ public abstract class PlayPosableAnimationHandlerMixin {
         ci.cancel();
 
         Boolean ownedByPlayer = BattleIntroOverlay.INSTANCE.isPlayerOwnedEntity(packet.getEntityId());
+
+        if (ownedByPlayer == null) {
+            ownedByPlayer = BattleIntroOverlay.INSTANCE.ensureExistingBattlePokemonRegistered(
+                    packet.getEntityId()
+            );
+        }
+
         boolean isPlayerOwned = ownedByPlayer == null || ownedByPlayer;
 
         Runnable replay = () -> SchedulingFunctionsKt.afterOnClient(1.5f, () -> {

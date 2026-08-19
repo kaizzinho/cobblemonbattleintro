@@ -2,9 +2,12 @@ package com.kaizzinho.battleintroduction.client
 
 import com.cobblemon.mod.common.api.battles.model.actor.BattleActor
 import com.cobblemon.mod.common.battles.actor.PlayerBattleActor
+import com.cobblemon.mod.common.entity.pokemon.PokemonEntity
 import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback
+import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gui.DrawContext
 import net.minecraft.client.network.AbstractClientPlayerEntity
@@ -125,6 +128,20 @@ object BattleIntroOverlay {
     private val battleSpawnInfo =
         java.util.concurrent.ConcurrentHashMap<Int, BattleSpawnInfo>()
 
+    private data class FacingDebugSnapshot(
+        val yaw: Float,
+        val bodyYaw: Float,
+        val headYaw: Float,
+        val spawnDirection: Float?,
+        val loggedAtMs: Long
+    )
+
+    private val facingDebugSnapshots =
+        java.util.concurrent.ConcurrentHashMap<String, FacingDebugSnapshot>()
+
+    private val facingSetterLastLogMs =
+        java.util.concurrent.ConcurrentHashMap<String, Long>()
+
     private const val PLAYER_STAGGER_DELAY_S = 2.5f
 
     private fun elapsedDebugMs(): Long =
@@ -186,9 +203,53 @@ object BattleIntroOverlay {
     ) {
         entityOwnership[entityId] = isPlayerOwned
         battleSpawnInfo[entityId] = BattleSpawnInfo(isPlayerOwned, x, z)
+
+        debugLog(
+            "[FACING-DEBUG] registered battle pokemon entityId={} side={} spawnPos=({}, {}) trackedCount={}",
+            entityId,
+            if (isPlayerOwned) "player" else "opponent",
+            "%.3f".format(x),
+            "%.3f".format(z),
+            battleSpawnInfo.size
+        )
     }
 
     fun isPlayerOwnedEntity(entityId: Int): Boolean? = entityOwnership[entityId]
+
+
+    fun ensureExistingBattlePokemonRegistered(entityId: Int): Boolean? {
+        entityOwnership[entityId]?.let { return it }
+
+        val client = MinecraftClient.getInstance()
+        val world = client.world ?: return null
+        val entity = world.getEntityById(entityId) as? PokemonEntity
+            ?: return null
+        val pokemonUUID = entity.pokemon.uuid
+
+        val isPlayerOwned = when {
+            pokemonUUID in localPokemonUUIDs -> true
+            pokemonUUID in opponentPokemonUUIDs -> false
+            else -> return null
+        }
+
+        registerBattlePokemonSpawn(
+            entityId = entityId,
+            isPlayerOwned = isPlayerOwned,
+            x = entity.x,
+            z = entity.z
+        )
+
+        debugLog(
+            "[FACING-DEBUG] resolved existing battle pokemon entityId={} pokemon={} side={} currentPos=({}, {})",
+            entityId,
+            pokemonUUID,
+            if (isPlayerOwned) "player" else "opponent",
+            "%.3f".format(entity.x),
+            "%.3f".format(entity.z)
+        )
+
+        return isPlayerOwned
+    }
 
 
     fun getDesiredBattlePokemonYaw(entityId: Int): Float? {
@@ -229,22 +290,215 @@ object BattleIntroOverlay {
     fun refreshBattlePokemonFacing() {
         val client = MinecraftClient.getInstance()
         client.execute {
-            val world = client.world ?: return@execute
+            applyBattlePokemonFacing(client, activeBattleOnly = false)
+        }
+    }
 
-            battleSpawnInfo.keys.forEach { entityId ->
-                val yaw = getDesiredBattlePokemonYaw(entityId)
-                    ?: return@forEach
-                val entity = world.getEntityById(entityId) as? LivingEntity
-                    ?: return@forEach
 
-                entity.setYaw(yaw)
-                entity.setHeadYaw(yaw)
-                entity.setBodyYaw(yaw)
+    private fun applyBattlePokemonFacingBeforeRender(client: MinecraftClient) {
+        if (battleSpawnInfo.isEmpty()) {
+            return
+        }
 
-                entity.prevHeadYaw = yaw
-                entity.prevBodyYaw = yaw
+        debugFacingSnapshot("before_render", client)
+        applyBattlePokemonFacing(client, activeBattleOnly = true)
+        debugFacingSnapshot("after_render_correction", client)
+    }
+
+
+    private fun applyBattlePokemonFacing(
+        client: MinecraftClient,
+        activeBattleOnly: Boolean
+    ) {
+        val world = client.world ?: return
+
+        battleSpawnInfo.keys.forEach { entityId ->
+            val yaw = getDesiredBattlePokemonYaw(entityId)
+                ?: return@forEach
+            val entity = world.getEntityById(entityId) as? LivingEntity
+                ?: return@forEach
+
+            if (
+                activeBattleOnly &&
+                entity is PokemonEntity &&
+                entity.battleId == null
+            ) {
+                return@forEach
+            }
+
+            entity.setYaw(yaw)
+            entity.setHeadYaw(yaw)
+            entity.setBodyYaw(yaw)
+
+            entity.prevHeadYaw = yaw
+            entity.prevBodyYaw = yaw
+        }
+    }
+
+
+    fun shouldTraceBattlePokemon(entityId: Int): Boolean =
+        BattleIntroductionConfig.debugLogging &&
+            battleSpawnInfo.containsKey(entityId)
+
+
+    fun traceRotationSetter(
+        entityId: Int,
+        channel: String,
+        oldValue: Float,
+        newValue: Float
+    ) {
+        if (!shouldTraceBattlePokemon(entityId)) {
+            return
+        }
+
+        val desired = getDesiredBattlePokemonYaw(entityId)
+            ?: return
+        val awayFromDesired = angleDistance(newValue, desired)
+
+        // Ignore our own corrective writes and tiny interpolation noise.
+        if (awayFromDesired < 1.0f) {
+            return
+        }
+
+        val stack = Thread.currentThread().stackTrace.toList()
+
+        if (
+            stack.any {
+                it.className ==
+                    "com.kaizzinho.battleintroduction.client.BattleIntroOverlay" &&
+                    it.methodName == "applyBattlePokemonFacing"
+            }
+        ) {
+            return
+        }
+
+        val now = System.currentTimeMillis()
+        val rateKey = "$entityId:$channel"
+        val previousLog = facingSetterLastLogMs[rateKey] ?: 0L
+        if (now - previousLog < 100L) {
+            return
+        }
+        facingSetterLastLogMs[rateKey] = now
+
+        val callerChain = stack
+            .asSequence()
+            .filterNot {
+                val name = it.className
+                name == "java.lang.Thread" ||
+                    name ==
+                        "com.kaizzinho.battleintroduction.client.BattleIntroOverlay" ||
+                    name.startsWith(
+                        "com.kaizzinho.battleintroduction.mixin.client.EntityYawDebugMixin"
+                    ) ||
+                    name.startsWith(
+                        "com.kaizzinho.battleintroduction.mixin.client.LivingEntityYawDebugMixin"
+                    ) ||
+                    name.startsWith("org.spongepowered.asm.mixin")
+            }
+            .take(8)
+            .joinToString(" <- ") {
+                "${it.className}.${it.methodName}:${it.lineNumber}"
+            }
+
+        LOGGER.info(
+            "[FACING-SETTER] entityId={} channel={} old={} new={} desired={} delta={} callers={}",
+            entityId,
+            channel,
+            "%.2f".format(oldValue),
+            "%.2f".format(newValue),
+            "%.2f".format(desired),
+            "%.2f".format(awayFromDesired),
+            callerChain.ifBlank { "<unknown>" }
+        )
+    }
+
+
+    private fun debugFacingSnapshot(
+        stage: String,
+        client: MinecraftClient
+    ) {
+        if (!BattleIntroductionConfig.debugLogging || battleSpawnInfo.isEmpty()) {
+            return
+        }
+
+        val world = client.world ?: return
+        val now = System.currentTimeMillis()
+
+        battleSpawnInfo.forEach { (entityId, spawnInfo) ->
+            val entity = world.getEntityById(entityId) as? PokemonEntity
+                ?: return@forEach
+            val desired = getDesiredBattlePokemonYaw(entityId)
+                ?: return@forEach
+            val spawnDirection = runCatching {
+                entity.dataTracker.get(PokemonEntity.SPAWN_DIRECTION)
+            }.getOrNull()
+
+            val key = "$stage:$entityId"
+            val previous = facingDebugSnapshots[key]
+            val changed =
+                previous == null ||
+                    angleDistance(entity.yaw, previous.yaw) >= 1.0f ||
+                    angleDistance(entity.bodyYaw, previous.bodyYaw) >= 1.0f ||
+                    angleDistance(entity.headYaw, previous.headYaw) >= 1.0f ||
+                    (
+                        spawnDirection != null &&
+                        previous.spawnDirection != null &&
+                        angleDistance(
+                            spawnDirection,
+                            previous.spawnDirection
+                        ) >= 1.0f
+                    )
+
+            val wrong =
+                angleDistance(entity.yaw, desired) >= 2.0f ||
+                    angleDistance(entity.bodyYaw, desired) >= 2.0f ||
+                    angleDistance(entity.headYaw, desired) >= 2.0f ||
+                    (
+                        spawnDirection != null &&
+                        angleDistance(spawnDirection, desired) >= 2.0f
+                    )
+
+            val enoughTimePassed =
+                previous == null || now - previous.loggedAtMs >= 500L
+
+            if (changed || (wrong && enoughTimePassed)) {
+                LOGGER.info(
+                    "[FACING-DEBUG] stage={} entityId={} side={} age={} battleId={} pos=({}, {}, {}) desired={} yaw={} body={} head={} prevBody={} prevHead={} spawnDirection={} wrong={}",
+                    stage,
+                    entityId,
+                    if (spawnInfo.isPlayerOwned) "player" else "opponent",
+                    entity.age,
+                    entity.battleId,
+                    "%.3f".format(entity.x),
+                    "%.3f".format(entity.y),
+                    "%.3f".format(entity.z),
+                    "%.2f".format(desired),
+                    "%.2f".format(entity.yaw),
+                    "%.2f".format(entity.bodyYaw),
+                    "%.2f".format(entity.headYaw),
+                    "%.2f".format(entity.prevBodyYaw),
+                    "%.2f".format(entity.prevHeadYaw),
+                    spawnDirection?.let { "%.2f".format(it) } ?: "<unavailable>",
+                    wrong
+                )
+
+                facingDebugSnapshots[key] = FacingDebugSnapshot(
+                    yaw = entity.yaw,
+                    bodyYaw = entity.bodyYaw,
+                    headYaw = entity.headYaw,
+                    spawnDirection = spawnDirection,
+                    loggedAtMs = now
+                )
             }
         }
+    }
+
+
+    private fun angleDistance(a: Float, b: Float): Float {
+        var delta = (a - b) % 360f
+        if (delta > 180f) delta -= 360f
+        if (delta < -180f) delta += 360f
+        return kotlin.math.abs(delta)
     }
 
 
@@ -313,6 +567,17 @@ object BattleIntroOverlay {
         HudRenderCallback.EVENT.register { drawContext, tickCounter ->
             if (state != State.IDLE) render(drawContext, tickCounter.getTickDelta(true))
         }
+
+        ClientTickEvents.END_CLIENT_TICK.register { client ->
+            debugFacingSnapshot("tick_end", client)
+        }
+
+        WorldRenderEvents.BEFORE_ENTITIES.register {
+            applyBattlePokemonFacingBeforeRender(
+                MinecraftClient.getInstance()
+            )
+        }
+
         LOGGER.info("Battle intro HUD renderer registered")
     }
 
@@ -386,6 +651,25 @@ object BattleIntroOverlay {
         pendingOpponentPackets.clear()
         entityOwnership.clear()
         battleSpawnInfo.clear()
+        facingDebugSnapshots.clear()
+        facingSetterLastLogMs.clear()
+
+        if (pokemonPresentationEntity != null) {
+            registerBattlePokemonSpawn(
+                entityId = pokemonPresentationEntity.id,
+                isPlayerOwned = false,
+                x = pokemonPresentationEntity.x,
+                z = pokemonPresentationEntity.z
+            )
+
+            debugLog(
+                "[FACING-DEBUG] pre-registered existing wild opponent entityId={} pokemon={} battleId={}",
+                pokemonPresentationEntity.id,
+                pokemonPresentationEntity.pokemon.uuid,
+                pokemonPresentationEntity.battleId
+            )
+        }
+
         introStartedAtMs = System.currentTimeMillis()
         debugSequence = 0L
 

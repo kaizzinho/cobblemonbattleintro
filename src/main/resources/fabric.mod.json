@@ -12,6 +12,7 @@
     "issues": "https://github.com/arthurc0sme/kaizzinhobattleslider/issues"
   },
   "license": "Battle Introduction Source-Available Permission License 1.0",
+  "icon": "assets/battleintroduction/icon.png",
   "environment": "*",
   "entrypoints": {
     "fabric-datagen": [
