@@ -88,10 +88,26 @@ object BattleHandler {
             resolveOpponentEntity(opponentActor)
 
 
+// raid rules win before boss and special wild rules
+        val raid =
+            if (
+                opponentActor.type == ActorType.WILD &&
+                BattleIntroductionConfig.raidDenBattleIntros
+            ) {
+                RaidDensCompat.resolve(
+                    opponentActor,
+                    opponentEntity
+                )
+            } else {
+                null
+            }
+
+
 // boss rules win before special wild rules
         val wildBoss =
             if (
                 opponentActor.type == ActorType.WILD &&
+                raid == null &&
                 BattleIntroductionConfig.wildBossBattleIntros
             ) {
                 WildBossesCompat.resolve(
@@ -105,6 +121,7 @@ object BattleHandler {
         var specialWild =
             if (
                 opponentActor.type == ActorType.WILD &&
+                raid == null &&
                 wildBoss == null
             ) {
                 SpecialWildPokemonResolver.resolve(
@@ -128,6 +145,7 @@ object BattleHandler {
 
         if (
             opponentActor.type == ActorType.WILD &&
+            raid == null &&
             wildBoss == null &&
             specialWild == null
         ) {
@@ -136,14 +154,16 @@ object BattleHandler {
         }
 
         activeBattleId = battleId
+        raid?.let(RaidDensCompat::debugRaid)
         wildBoss?.let(WildBossesCompat::debugBoss)
 
         debugLog(
-            "Starting BattleIntroduction intro: battleId={}, localActor={}, opponentActor={}, opponentType={}, wildBoss={}, specialWild={}",
+            "Starting BattleIntroduction intro: battleId={}, localActor={}, opponentActor={}, opponentType={}, raid={}, wildBoss={}, specialWild={}",
             battleId,
             localActor.javaClass.name,
             opponentActor.javaClass.name,
             opponentActor.type,
+            raid?.stars ?: "<none>",
             wildBoss?.tierName ?: "<none>",
             specialWild?.role ?: "<none>"
         )
@@ -151,6 +171,7 @@ object BattleHandler {
         BattleIntroOverlay.trigger(
             localActor,
             opponentActor,
+            raid,
             wildBoss,
             specialWild
         )

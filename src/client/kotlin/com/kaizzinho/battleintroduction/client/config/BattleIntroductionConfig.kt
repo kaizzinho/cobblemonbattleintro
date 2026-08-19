@@ -127,6 +127,7 @@ object BattleIntroductionConfig {
         var trainerBattleIntros: Boolean = true,
         var pvpBattleIntros: Boolean = true,
         var wildBossBattleIntros: Boolean = true,
+        var raidDenBattleIntros: Boolean = true,
         var legendaryBattleIntros: Boolean = true,
         var mythicalBattleIntros: Boolean = true,
 
@@ -179,6 +180,9 @@ object BattleIntroductionConfig {
 
     val wildBossBattleIntros: Boolean
         get() = values.wildBossBattleIntros
+
+    val raidDenBattleIntros: Boolean
+        get() = values.raidDenBattleIntros
 
     val legendaryBattleIntros: Boolean
         get() = values.legendaryBattleIntros
@@ -306,11 +310,12 @@ object BattleIntroductionConfig {
             writeConfig()
 
             LOGGER.info(
-                "Loaded BattleIntroduction config: intros={}, trainer={}, pvp={}, wildBoss={}, legendary={}, mythical={}, speed={}, flash={}, particles={}, trainerPortrait={}, pokemonPortrait={}, debugLogging={}, rctTrainerRoleOverrides={}",
+                "Loaded BattleIntroduction config: intros={}, trainer={}, pvp={}, wildBoss={}, raidDens={}, legendary={}, mythical={}, speed={}, flash={}, particles={}, trainerPortrait={}, pokemonPortrait={}, debugLogging={}, rctTrainerRoleOverrides={}",
                 values.enableBattleIntros,
                 values.trainerBattleIntros,
                 values.pvpBattleIntros,
                 values.wildBossBattleIntros,
+                values.raidDenBattleIntros,
                 values.legendaryBattleIntros,
                 values.mythicalBattleIntros,
                 values.animationSpeed,

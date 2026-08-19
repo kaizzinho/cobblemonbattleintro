@@ -3,7 +3,7 @@
   "id": "cobblemonbattleintroduction",
   "version": "${version}",
   "name": "Cobblemon Battle Introduction",
-  "description": "Adds Pokémon-style VS battle introductions to Cobblemon with animated 3D portraits, optional 2D sprites, trainer battles, PvP, WildBoss, Legendary and Mythical encounters, and extensive customization.",
+  "description": "Adds Pok\u00e9mon-style VS battle introductions to Cobblemon with animated 3D portraits, optional 2D sprites, trainer battles, PvP, WildBoss, Raid Dens, Legendary and Mythical encounters, and extensive customization.",
   "authors": [
     "kaizzinho"
   ],
@@ -45,7 +45,8 @@
   "suggests": {
     "modmenu": ">=11.0.0",
     "wildbosses": "*",
-    "rctmod": "*"
+    "rctmod": "*",
+    "cobblemonraiddens": "*"
   },
   "provides": [
     "kaizzinhobattleslider"

@@ -23,9 +23,7 @@
     "EntityRendererMixin",
     "PokemonEntityNameMixin",
     "PlayPosableAnimationHandlerMixin",
-    "PlaySoundS2CPacketMixin",
-    "EntityYawDebugMixin",
-    "LivingEntityYawDebugMixin"
+    "PlaySoundS2CPacketMixin"
   ],
   "injectors": {
     "defaultRequire": 1

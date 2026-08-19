@@ -149,6 +149,12 @@ class BattleIntroductionConfigScreen(
 
         addBooleanOption(
             row++,
+            "battleintroduction.config.raiddens_intros",
+            working.raidDenBattleIntros
+        ) { working.raidDenBattleIntros = it }
+
+        addBooleanOption(
+            row++,
             "battleintroduction.config.legendary_intros",
             working.legendaryBattleIntros
         ) { working.legendaryBattleIntros = it }

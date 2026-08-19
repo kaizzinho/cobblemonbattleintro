@@ -86,6 +86,7 @@ object BattleIntroOverlay {
     private fun teamBallsSlideMs(): Long =
         if (
             BattleIntroductionConfig.showPartyBalls ||
+            raidPresentation != null ||
             bossPresentation != null ||
             specialWildPresentation != null
         ) {
@@ -138,9 +139,6 @@ object BattleIntroOverlay {
 
     private val facingDebugSnapshots =
         java.util.concurrent.ConcurrentHashMap<String, FacingDebugSnapshot>()
-
-    private val facingSetterLastLogMs =
-        java.util.concurrent.ConcurrentHashMap<String, Long>()
 
     private const val PLAYER_STAGGER_DELAY_S = 2.5f
 
@@ -336,83 +334,6 @@ object BattleIntroOverlay {
     }
 
 
-    fun shouldTraceBattlePokemon(entityId: Int): Boolean =
-        BattleIntroductionConfig.debugLogging &&
-            battleSpawnInfo.containsKey(entityId)
-
-
-    fun traceRotationSetter(
-        entityId: Int,
-        channel: String,
-        oldValue: Float,
-        newValue: Float
-    ) {
-        if (!shouldTraceBattlePokemon(entityId)) {
-            return
-        }
-
-        val desired = getDesiredBattlePokemonYaw(entityId)
-            ?: return
-        val awayFromDesired = angleDistance(newValue, desired)
-
-        // Ignore our own corrective writes and tiny interpolation noise.
-        if (awayFromDesired < 1.0f) {
-            return
-        }
-
-        val stack = Thread.currentThread().stackTrace.toList()
-
-        if (
-            stack.any {
-                it.className ==
-                    "com.kaizzinho.battleintroduction.client.BattleIntroOverlay" &&
-                    it.methodName == "applyBattlePokemonFacing"
-            }
-        ) {
-            return
-        }
-
-        val now = System.currentTimeMillis()
-        val rateKey = "$entityId:$channel"
-        val previousLog = facingSetterLastLogMs[rateKey] ?: 0L
-        if (now - previousLog < 100L) {
-            return
-        }
-        facingSetterLastLogMs[rateKey] = now
-
-        val callerChain = stack
-            .asSequence()
-            .filterNot {
-                val name = it.className
-                name == "java.lang.Thread" ||
-                    name ==
-                        "com.kaizzinho.battleintroduction.client.BattleIntroOverlay" ||
-                    name.startsWith(
-                        "com.kaizzinho.battleintroduction.mixin.client.EntityYawDebugMixin"
-                    ) ||
-                    name.startsWith(
-                        "com.kaizzinho.battleintroduction.mixin.client.LivingEntityYawDebugMixin"
-                    ) ||
-                    name.startsWith("org.spongepowered.asm.mixin")
-            }
-            .take(8)
-            .joinToString(" <- ") {
-                "${it.className}.${it.methodName}:${it.lineNumber}"
-            }
-
-        LOGGER.info(
-            "[FACING-SETTER] entityId={} channel={} old={} new={} desired={} delta={} callers={}",
-            entityId,
-            channel,
-            "%.2f".format(oldValue),
-            "%.2f".format(newValue),
-            "%.2f".format(desired),
-            "%.2f".format(awayFromDesired),
-            callerChain.ifBlank { "<unknown>" }
-        )
-    }
-
-
     private fun debugFacingSnapshot(
         stage: String,
         client: MinecraftClient
@@ -521,6 +442,7 @@ object BattleIntroOverlay {
     private var isOpponentPlayer: Boolean = false
     private var localEntityRef:    LivingEntity? = null
     private var opponentEntityRef: LivingEntity? = null
+    private var raidPresentation: RaidDensCompat.RaidPresentation? = null
     private var bossPresentation: WildBossesCompat.BossPresentation? = null
     private var specialWildPresentation: SpecialWildPokemonResolver.Presentation? = null
 
@@ -584,6 +506,7 @@ object BattleIntroOverlay {
     fun trigger(
         localActor: BattleActor,
         opponentActor: BattleActor,
+        raid: RaidDensCompat.RaidPresentation? = null,
         wildBoss: WildBossesCompat.BossPresentation? = null,
         specialWild: SpecialWildPokemonResolver.Presentation? = null
     ) {
@@ -594,11 +517,12 @@ object BattleIntroOverlay {
         isOpponentPlayer = opponentActor is PlayerBattleActor
         localEntityRef = client.player
 
+        raidPresentation = raid
         bossPresentation = wildBoss
         specialWildPresentation = specialWild
 
         val pokemonPresentationEntity =
-            wildBoss?.entity ?: specialWild?.entity
+            raid?.entity ?: wildBoss?.entity ?: specialWild?.entity
 
         val oppEntity =
             pokemonPresentationEntity
@@ -609,6 +533,9 @@ object BattleIntroOverlay {
 
         opponentEntityRef = oppEntity
         opponentName = when {
+            raid != null ->
+                raid.speciesName
+
             wildBoss != null ->
                 "${formatBossTier(wildBoss.tierName)} Boss ${wildBoss.speciesName}"
 
@@ -639,6 +566,7 @@ object BattleIntroOverlay {
             opponentActor,
             oppEntity,
             isOpponentPlayer,
+            raid,
             wildBoss,
             specialWild
         )
@@ -652,7 +580,6 @@ object BattleIntroOverlay {
         entityOwnership.clear()
         battleSpawnInfo.clear()
         facingDebugSnapshots.clear()
-        facingSetterLastLogMs.clear()
 
         if (pokemonPresentationEntity != null) {
             registerBattlePokemonSpawn(
@@ -689,9 +616,24 @@ object BattleIntroOverlay {
         opponentActor: BattleActor,
         opponentEntity: LivingEntity?,
         isPvP: Boolean,
+        raid: RaidDensCompat.RaidPresentation?,
         wildBoss: WildBossesCompat.BossPresentation?,
         specialWild: SpecialWildPokemonResolver.Presentation?
     ) {
+        if (raid != null) {
+            val color = raid.typeColorRgb
+            topColorA = brighten(color, 0.68f)
+            topColorB = brighten(color, 1.42f)
+
+            debugLog(
+                "Raid Dens slider palette: stars={} species={} color=0x{}",
+                raid.stars.length,
+                raid.speciesName,
+                "%06X".format(color and 0xFFFFFF)
+            )
+            return
+        }
+
         if (wildBoss != null) {
             val color = bossTierColor(wildBoss.tierName)
             topColorA = brighten(color, 0.72f)
@@ -820,8 +762,7 @@ object BattleIntroOverlay {
                     is ItemStack -> return value.copy()
                     is Item -> return ItemStack(value)
                     is Identifier -> {
-                        val item = Registries.ITEM.get(value)
-                        if (item != null) return ItemStack(item)
+                        return ItemStack(Registries.ITEM.get(value))
                     }
                     is String -> {
                         val id = Identifier.tryParse(value)
@@ -1072,10 +1013,11 @@ object BattleIntroOverlay {
             val oppX = (startOppX + (restingOppX - startOppX) * charT).toInt()
             val plrX = (startPlrX + (restingPlrX - startPlrX) * charT).toInt()
 
+            val raid = raidPresentation
             val boss = bossPresentation
             val specialWild = specialWildPresentation
             val pokemonPortraitEntity =
-                boss?.entity ?: specialWild?.entity
+                raid?.entity ?: boss?.entity ?: specialWild?.entity
             val oppEntity = opponentEntityRef ?: localEntityRef
 
             if (pokemonPortraitEntity != null) {
@@ -1119,10 +1061,23 @@ object BattleIntroOverlay {
             else -> 0f
         }
         if (teamBallsT > 0f) {
+            val raid = raidPresentation
             val boss = bossPresentation
             val specialWild = specialWildPresentation
 
             when {
+                raid != null -> {
+                    drawRaidInfo(
+                        ctx = drawContext,
+                        raid = raid,
+                        sw = sw,
+                        barTop = topY,
+                        barHeight = barH,
+                        phaseProgress = teamBallsT,
+                        exitProgress = if (state == State.SLIDING_OUT) barsT else 1f
+                    )
+                }
+
                 boss != null -> {
                     drawBossInfo(
                         ctx = drawContext,
@@ -1192,6 +1147,100 @@ object BattleIntroOverlay {
         if (state != State.SLIDING_OUT) {
             drawSkipPrompt(drawContext, sw, sh)
         }
+    }
+
+
+    private fun drawRaidInfo(
+        ctx: DrawContext,
+        raid: RaidDensCompat.RaidPresentation,
+        sw: Int,
+        barTop: Int,
+        barHeight: Int,
+        phaseProgress: Float,
+        exitProgress: Float
+    ) {
+        val font = MinecraftClient.getInstance().textRenderer
+        val stars = raid.stars
+        val level = "Lv. ${raid.level}"
+        val contentWidth =
+            maxOf(
+                font.getWidth(stars),
+                font.getWidth(level)
+            )
+        val padX = 7
+        val padY = 4
+        val lineGap = 2
+        val boxWidth = contentWidth + padX * 2
+        val boxHeight =
+            font.fontHeight * 2 +
+                lineGap +
+                padY * 2
+        val targetX =
+            (sw * 3 / 8 - boxWidth)
+                .coerceAtLeast(24)
+        val startX = -boxWidth - 24
+        val enter =
+            easeOutCubic(
+                phaseProgress.coerceIn(0f, 1f)
+            )
+        val visible =
+            (
+                enter *
+                    exitProgress.coerceIn(0f, 1f)
+            ).coerceIn(0f, 1f)
+        val x =
+            (
+                startX +
+                    (targetX - startX) *
+                    visible
+            ).toInt()
+        val y =
+            barTop +
+                (barHeight - boxHeight) / 2
+
+        ctx.fill(
+            x,
+            y,
+            x + boxWidth,
+            y + boxHeight,
+            argb(190, 0x10, 0x14, 0x16)
+        )
+        ctx.fill(
+            x,
+            y,
+            x + boxWidth,
+            y + 1,
+            argb(220, 0xF0, 0xF0, 0xF0)
+        )
+        ctx.fill(
+            x,
+            y + boxHeight - 1,
+            x + boxWidth,
+            y + boxHeight,
+            argb(220, 0x55, 0x55, 0x55)
+        )
+
+        val starsX =
+            x + (boxWidth - font.getWidth(stars)) / 2
+        val levelX =
+            x + (boxWidth - font.getWidth(level)) / 2
+
+        ctx.drawText(
+            font,
+            stars,
+            starsX,
+            y + padY,
+            0xFFFFFFFF.toInt(),
+            true
+        )
+        ctx.drawText(
+            font,
+            level,
+            levelX,
+            y + padY + font.fontHeight + lineGap,
+            0xFFFFFFFF.toInt(),
+            true
+        )
     }
 
 
@@ -1366,8 +1415,11 @@ object BattleIntroOverlay {
         sh: Int
     ) {
         if (
-            !BattleIntroductionConfig.allowSkipping ||
-            !BattleIntroductionConfig.showSkipPrompt
+            !BattleIntroductionConfig.showSkipPrompt ||
+            (
+                !isOpponentPlayer &&
+                    !BattleIntroductionConfig.allowSkipping
+            )
         ) {
             return
         }
@@ -1650,7 +1702,10 @@ object BattleIntroOverlay {
 
 
     fun canSkip(): Boolean =
-        BattleIntroductionConfig.allowSkipping &&
+        (
+            isOpponentPlayer ||
+                BattleIntroductionConfig.allowSkipping
+        ) &&
             state != State.IDLE &&
             state != State.SLIDING_OUT &&
             !isFlushing
@@ -1781,6 +1836,8 @@ object BattleIntroOverlay {
         opponentSkinId = null
         localEntityRef = null
         opponentEntityRef = null
+        isOpponentPlayer = false
+        raidPresentation = null
         bossPresentation = null
         specialWildPresentation = null
         localPokemonUUIDs = emptySet()

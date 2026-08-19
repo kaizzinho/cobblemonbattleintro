@@ -24,12 +24,13 @@ The current version supports:
 - trainer battles;
 - player-versus-player battles;
 - WildBosses Boss encounters;
+- Cobblemon Raid Dens battles;
 - wild Legendary Pokémon;
 - wild Mythical Pokémon.
 
 Ordinary wild Pokémon remain untouched.
 
-The visual presentation runs on the client. A small common-side handler also safely recalls active player-owned Pokémon before supported battles, so installing the mod on both the client and server is recommended for multiplayer.
+The visual presentation runs on the client. A small common-side handler also safely recalls active player-owned Pokémon before supported battles, so server installation is recommended for multiplayer. Client installation remains optional per player: players without Battle Introduction can play on the same server and receive the normal Cobblemon battle presentation while players with the mod see their own local introduction.
 
 ### What it does
 
@@ -50,6 +51,8 @@ The VS bars retract back into the world before packet replay begins. There is no
 Wild encounters follow this priority:
 
 ```text
+Cobblemon Raid Dens
+    ↓
 WildBosses Boss
     ↓
 Legendary or Mythical
@@ -57,7 +60,7 @@ Legendary or Mythical
 ordinary wild battle
 ```
 
-A Pokémon that is both Legendary/Mythical and an actual WildBosses Boss uses the **Boss presentation**.
+A raid encounter always uses the **Raid Dens presentation**. Outside raids, a Pokémon that is both Legendary/Mythical and an actual WildBosses Boss uses the **Boss presentation**.
 
 This is important for modpacks that change the WildBosses species blacklist.
 
@@ -67,6 +70,7 @@ This is important for modpacks that change the WildBosses species blacklist.
 - [x] **Trainer battles** with optional RCT metadata and colors.
 - [x] **PvP battles** with player names, player skins, party Poké Balls, and a dedicated orange palette.
 - [x] **WildBosses Boss battles** with tier colors, Boss species name, authoritative scaled level, and a real Pokémon portrait.
+- [x] **Cobblemon Raid Dens battles** with native raid-type colors, star rating, level, real Pokémon portrait, and per-client presentation.
 - [x] **Legendary and Mythical wild battles** detected from Cobblemon species labels.
 - [x] **Primary-type colors** for Legendary/Mythical encounters.
 - [x] **Controlled 3D trainer portraits** using upper-body player models instead of live world animation.
@@ -91,6 +95,7 @@ This is important for modpacks that change the WildBosses species blacklist.
 - [x] **Cobbleverse-aware RCT progression detection** without hardcoding individual Gym Leaders.
 - [x] **Exact RCT role overrides** available in JSON for unusual datapacks.
 - [x] **Soft WildBosses integration** through a reflection-friendly public API.
+- [x] **Soft Cobblemon Raid Dens integration** through reflection.
 - [x] **Soft RCT integration** through reflection.
 - [x] **Optional Cobblemon Battle Extras GUI suppression compatibility** when that mod is installed.
 - [x] **Temporary Pokémon world-name-tag suppression** while the VS visual is active.
@@ -142,6 +147,10 @@ The global **Animation Speed** setting scales the visual stages while the hold d
 
 ![WildBoss encounter](docs/images/wildbosses.png)
 
+#### Cobblemon Raid Dens
+
+![Raid Battle](docs/images/raid.png)
+
 #### Legendary and Mythical encounters
 
 ![Legendary encounter](docs/images/legendary.png)
@@ -171,6 +180,7 @@ The global **Animation Speed** setting scales the visual stages while the hold d
 - **Mod Menu `11.0.0+`** — adds the in-game configuration screen.
 - **Radical Cobblemon Trainers** — adds trainer entity metadata, skins, names, trainer roles, and type colors.
 - **WildBosses** — enables the dedicated Boss encounter presentation.
+- **Cobblemon Raid Dens** — enables the dedicated raid presentation. Raid intros are local to each modded client, so unmodded players can participate in the same raid normally.
 - **Cobblemon Battle Extras** — Battle Introduction conditionally suppresses its battle UI elements during the intro when detected.
 - **Compatible Pokémon sprite resource pack** — enables external 2D Pokémon portraits and fallback rendering.
 
@@ -183,6 +193,48 @@ For the best overall experience, I **highly recommend using Cobblemon Battle Int
 For CobbleTunes, use a resource pack that provides the appropriate `.ogg` battle music files so the encounter can start with matching Pokémon-style music. For Battle Introduction, use a compatible resource pack that provides matching 2D Pokémon portraits and other presentation assets. Used together, the music, portraits, and VS animation make the transition feel much closer to a complete Pokémon-style battle introduction instead of a standalone visual effect.
 
 These are still optional and Battle Introduction works without them.
+
+
+### Cobblemon Raid Dens integration
+
+When Cobblemon Raid Dens is installed, raid battles receive a dedicated Pokémon-style introduction before the local battle packets are released.
+
+Raid encounters have the highest wild-battle presentation priority:
+
+```text
+Cobblemon Raid Dens
+    ↓
+WildBosses Boss
+    ↓
+Legendary or Mythical
+    ↓
+ordinary wild battle
+```
+
+The opponent keeps its species name in the normal top-right name badge. The raid information block replaces the opponent party row and shows the native raid star rating together with the boss level:
+
+```text
+★★★★★
+Lv. 75
+```
+
+The top bar color is taken from the Raid Dens raid type when available.
+
+Raid introductions use the normal **Allow Intro Skip** setting. If skipping is enabled, the player can skip the raid intro through the same safe packet-flush path used by other supported encounters.
+
+Raid intros are handled independently for each participating client. A player with Battle Introduction installed sees their own local raid intro when their Cobblemon battle starts. A player without the mod enters the normal Raid Dens/Cobblemon battle immediately. Battle Introduction does not impose a global raid delay and does not require every raid participant to have the client mod installed.
+
+The integration is soft. Battle Introduction still loads normally when Cobblemon Raid Dens is not installed.
+
+### Multiplayer behavior
+
+Battle Introduction is designed so modded and unmodded clients can share the same server.
+
+- **PvP:** a modded player sees their own introduction, while an unmodded opponent enters the normal Cobblemon battle immediately. PvP intros are always skippable.
+- **Raid Dens:** each participant handles the intro independently. Modded players see the raid intro, unmodded players do not, and the raid itself is never globally paused or synchronized by Battle Introduction.
+- **Other supported encounters:** skipping follows the global **Allow Intro Skip** option.
+
+The local introduction delays only that client's presentation and choice access. It does not require another player to install Battle Introduction and does not add a server-wide cinematic timer.
 
 ### Supported encounter types
 
@@ -210,6 +262,8 @@ PvP uses:
 - normal staged send-out flow.
 
 An RCT `rival` remains an NPC trainer. It is **not** treated as technical PvP.
+
+PvP introductions are always skippable, even when the global **Allow Intro Skip** option is disabled. This prevents a modded player from being forced to watch the full cinematic while an unmodded opponent is already waiting to make or resolve a choice. Players without Battle Introduction enter the normal Cobblemon PvP interface immediately.
 
 ### 3D trainer portraits
 
@@ -528,6 +582,8 @@ Advanced
 | Show Name Badges | On |
 | Show Party Balls | On |
 
+`Allow Intro Skip` applies to trainer, WildBosses, Raid Dens, Legendary, and Mythical introductions. PvP introductions are always skippable regardless of this setting.
+
 #### Battles
 
 | Option | Default |
@@ -535,6 +591,7 @@ Advanced
 | Trainer Battles | On |
 | PvP Battles | On |
 | WildBosses | On |
+| Cobblemon Raid Dens | On |
 | Legendary Pokémon | On |
 | Mythical Pokémon | On |
 
@@ -615,6 +672,7 @@ Current default values:
   "trainerBattleIntros": true,
   "pvpBattleIntros": true,
   "wildBossBattleIntros": true,
+  "raidDenBattleIntros": true,
   "legendaryBattleIntros": true,
   "mythicalBattleIntros": true,
   "animationSpeed": "normal",
@@ -835,12 +893,13 @@ A versão atual suporta:
 - batalhas contra treinadores;
 - batalhas entre jogadores;
 - encontros Boss do WildBosses;
+- batalhas do Cobblemon Raid Dens;
 - Pokémon Lendários selvagens;
 - Pokémon Míticos selvagens.
 
 Pokémon selvagens comuns continuam sem o slider.
 
-A parte visual é executada no cliente. Um pequeno handler comum também recolhe com segurança Pokémon ativos pertencentes aos jogadores antes de batalhas compatíveis, portanto em multiplayer é recomendado instalar o mod tanto no cliente quanto no servidor.
+A parte visual é executada no cliente. Um pequeno handler comum também recolhe com segurança Pokémon ativos pertencentes aos jogadores antes de batalhas compatíveis, portanto a instalação no servidor é recomendada em multiplayer. A instalação no cliente continua opcional para cada jogador: jogadores sem Battle Introduction podem jogar no mesmo servidor e recebem a apresentação normal do Cobblemon, enquanto jogadores com o mod veem sua própria introdução local.
 
 ### Como funciona
 
@@ -861,6 +920,8 @@ As barras VS saem e revelam o mundo antes da reprodução dos pacotes. Não exis
 Encontros selvagens usam esta prioridade:
 
 ```text
+Cobblemon Raid Dens
+    ↓
 Boss do WildBosses
     ↓
 Lendário ou Mítico
@@ -868,7 +929,7 @@ Lendário ou Mítico
 batalha selvagem comum
 ```
 
-Um Pokémon que seja Lendário/Mítico e também um Boss real do WildBosses usa a **apresentação de Boss**.
+Uma raid sempre usa a **apresentação de Raid Dens**. Fora de raids, um Pokémon que seja Lendário/Mítico e também um Boss real do WildBosses usa a **apresentação de Boss**.
 
 Isso é importante em modpacks que alteram a blacklist de espécies do WildBosses.
 
@@ -878,6 +939,7 @@ Isso é importante em modpacks que alteram a blacklist de espécies do WildBosse
 - [x] **Batalhas de treinador** com metadados e cores opcionais do RCT.
 - [x] **PvP** com nomes, skins, Poké Bolas da party e paleta laranja dedicada.
 - [x] **Bosses do WildBosses** com cores por tier, espécie, nível escalado e retrato real do Pokémon.
+- [x] **Batalhas do Cobblemon Raid Dens** com cor nativa do tipo da raid, estrelas, nível, retrato real do Pokémon e apresentação individual por cliente.
 - [x] **Lendários e Míticos selvagens** detectados pelos labels de species do Cobblemon.
 - [x] **Cores pelo tipo primário** em encontros Lendários/Míticos.
 - [x] **Retratos 3D controlados de treinadores** usando o tronco do modelo em vez da animação ao vivo da entidade.
@@ -902,6 +964,7 @@ Isso é importante em modpacks que alteram a blacklist de espécies do WildBosse
 - [x] **Detecção de progressão RCT compatível com Cobbleverse** sem hardcode individual de Gym Leaders.
 - [x] **Overrides exatos de roles do RCT** disponíveis no JSON.
 - [x] **Integração soft com WildBosses** pela API pública reflection-friendly.
+- [x] **Integração soft com Cobblemon Raid Dens** via reflection.
 - [x] **Integração soft com RCT** via reflection.
 - [x] **Compatibilidade opcional com Cobblemon Battle Extras** para esconder a UI dele durante a intro.
 - [x] **Supressão temporária da name tag do Pokémon no mundo** enquanto o VS está ativo.
@@ -953,6 +1016,10 @@ A opção **Velocidade da animação** escala os estágios visuais enquanto o te
 
 ![WildBoss encounter](docs/images/wildbosses.png)
 
+#### Cobblemon Raid Dens
+
+![Raid Battle](docs/images/raid.png)
+
 #### Encontros de pokémon lendário/mítico
 
 ![Legendary encounter](docs/images/legendary.png)
@@ -981,6 +1048,7 @@ A opção **Velocidade da animação** escala os estágios visuais enquanto o te
 - **Mod Menu `11.0.0+`** — adiciona a tela de configuração dentro do jogo.
 - **Radical Cobblemon Trainers** — fornece metadados, skins, nomes, roles e cores dos treinadores.
 - **WildBosses** — ativa a apresentação dedicada de Boss.
+- **Cobblemon Raid Dens** — ativa a apresentação dedicada de raid. As intros são locais para cada cliente com o mod, então jogadores sem Battle Introduction podem participar da mesma raid normalmente.
 - **Cobblemon Battle Extras** — o Battle Introduction esconde condicionalmente seus elementos durante a intro quando o mod é detectado.
 - **Resource pack compatível de sprites de Pokémon** — habilita retratos 2D externos e fallback.
 
@@ -993,6 +1061,48 @@ Para a melhor experiência geral, eu **recomendo fortemente usar o Cobblemon Bat
 Para o CobbleTunes, use um resource pack que forneça os arquivos de música `.ogg` adequados para que a batalha comece com uma trilha no estilo Pokémon. Para o Battle Introduction, use um resource pack compatível que forneça retratos 2D dos Pokémon e outros assets de apresentação. Usados em conjunto, música, retratos e animação VS fazem a transição parecer muito mais próxima de uma introdução completa de batalha Pokémon em vez de apenas um efeito visual isolado.
 
 Esses complementos continuam opcionais e o Battle Introduction funciona normalmente sem eles.
+
+
+### Integração com Cobblemon Raid Dens
+
+Quando o Cobblemon Raid Dens está instalado, batalhas de raid recebem uma introdução dedicada no estilo Pokémon antes da liberação dos pacotes locais da batalha.
+
+Raids têm a maior prioridade entre as apresentações de encontros selvagens:
+
+```text
+Cobblemon Raid Dens
+    ↓
+Boss do WildBosses
+    ↓
+Lendário ou Mítico
+    ↓
+batalha selvagem comum
+```
+
+O oponente mantém o nome da espécie no badge normal do canto superior direito. O bloco de informações da raid substitui a linha de Poké Bolas do oponente e mostra a quantidade nativa de estrelas junto com o nível do Boss:
+
+```text
+★★★★★
+Lv. 75
+```
+
+A cor da barra superior é obtida do tipo da raid do Raid Dens quando disponível.
+
+Introduções de raid usam a opção normal **Allow Intro Skip**. Se a opção estiver ativada, o jogador pode pular a intro da raid usando o mesmo fluxo seguro de liberação dos pacotes utilizado pelos outros encontros compatíveis.
+
+As intros de raid são tratadas de forma independente em cada cliente participante. Um jogador com Battle Introduction vê sua própria intro local quando a batalha do Cobblemon começa. Um jogador sem o mod entra imediatamente na batalha normal do Raid Dens/Cobblemon. O Battle Introduction não impõe um atraso global na raid e não exige que todos os participantes tenham o mod instalado no cliente.
+
+A integração é soft. O Battle Introduction continua iniciando normalmente quando Cobblemon Raid Dens não está instalado.
+
+### Comportamento em multiplayer
+
+Battle Introduction foi projetado para permitir que clientes com e sem o mod joguem no mesmo servidor.
+
+- **PvP:** um jogador com o mod vê sua própria introdução, enquanto um oponente sem o mod entra imediatamente na batalha normal do Cobblemon. Intros PvP são sempre puláveis.
+- **Raid Dens:** cada participante trata a intro de forma independente. Jogadores com o mod veem a intro da raid, jogadores sem o mod não veem, e a raid nunca é pausada ou sincronizada globalmente pelo Battle Introduction.
+- **Outros encontros compatíveis:** a possibilidade de pular segue a opção global **Allow Intro Skip**.
+
+A introdução local atrasa apenas a apresentação e o acesso às escolhas daquele cliente. Ela não exige que outro jogador instale Battle Introduction e não adiciona um timer cinematográfico global no servidor.
 
 ### Tipos de encontro
 
@@ -1020,6 +1130,8 @@ PvP usa:
 - fluxo normal de envio escalonado.
 
 Um `rival` do RCT continua sendo um treinador NPC. Ele **não** vira PvP técnico.
+
+Introduções PvP são sempre puláveis, mesmo quando a opção global **Allow Intro Skip** estiver desativada. Isso evita obrigar um jogador com o mod a assistir toda a animação enquanto um oponente sem o mod já está esperando para escolher ou resolver uma ação. Jogadores sem Battle Introduction entram imediatamente na interface PvP normal do Cobblemon.
 
 ### Retratos 3D de treinadores
 
@@ -1334,6 +1446,8 @@ Advanced
 | Show Name Badges | On |
 | Show Party Balls | On |
 
+`Allow Intro Skip` controla as introduções de treinador, WildBosses, Raid Dens, Lendários e Míticos. Introduções PvP são sempre puláveis independentemente dessa opção.
+
 #### Battles
 
 | Opção | Padrão |
@@ -1341,6 +1455,7 @@ Advanced
 | Trainer Battles | On |
 | PvP Battles | On |
 | WildBosses | On |
+| Cobblemon Raid Dens | On |
 | Legendary Pokémon | On |
 | Mythical Pokémon | On |
 
@@ -1415,6 +1530,7 @@ Valores padrão atuais:
   "trainerBattleIntros": true,
   "pvpBattleIntros": true,
   "wildBossBattleIntros": true,
+  "raidDenBattleIntros": true,
   "legendaryBattleIntros": true,
   "mythicalBattleIntros": true,
   "animationSpeed": "normal",
