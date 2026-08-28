@@ -53,7 +53,15 @@ object WildBossesCompat {
 
     fun resolve(actor: BattleActor, entity: LivingEntity?): BossPresentation? {
         if (actor.type != ActorType.WILD) return null
-        val pokemonEntity = entity as? PokemonEntity ?: return null
+        return resolveEntity(entity)
+    }
+
+    fun resolveEntity(
+        entity: LivingEntity?
+    ): BossPresentation? {
+        val pokemonEntity =
+            entity as? PokemonEntity
+                ?: return null
         val methods = apiMethods ?: return null
 
         return runCatching {
@@ -75,6 +83,19 @@ object WildBossesCompat {
             null
         }
     }
+
+    fun fromAuthoritative(
+        entity: PokemonEntity,
+        tierName: String,
+        scaledLevel: Int
+    ): BossPresentation =
+        BossPresentation(
+            entity = entity,
+            tierName =
+                tierName.uppercase(),
+            scaledLevelOverride =
+                scaledLevel.takeIf { it > 0 }
+        )
 
     private fun logCompatibilityFailure(error: Throwable) {
         if (compatibilityFailureLogged) return

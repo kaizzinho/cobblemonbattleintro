@@ -169,6 +169,65 @@ object RctTrainerMetadataResolver {
     }
 
 
+    fun resolveEntity(
+        entity: LivingEntity?
+    ): TrainerClassification? {
+        if (
+            entity == null ||
+            !FabricLoader.getInstance()
+                .isModLoaded(RCT_MOD_ID) ||
+            !isTrainerEntity(entity)
+        ) {
+            return null
+        }
+
+        return try {
+            val raw =
+                readRawTrainer(entity)
+                    ?: return null
+            val classification =
+                classify(raw)
+
+            debugLog(
+                "RCT client entity classification: entity={}, trainerId='{}', rawType='{}', optional={}, role={}, region={}, source={}",
+                entity.javaClass.name,
+                classification.trainerId,
+                classification.rawType,
+                classification.optional,
+                classification.role,
+                classification.region
+                    ?: "<none>",
+                classification.source
+            )
+
+            classification
+        } catch (e: ReflectiveOperationException) {
+            debugLog(
+                "RCT client entity reflection failed for entity={}: {}",
+                entity.javaClass.name,
+                e.message
+                    ?: e.javaClass.simpleName
+            )
+            null
+        } catch (e: LinkageError) {
+            debugLog(
+                "RCT client entity linkage failed for entity={}: {}",
+                entity.javaClass.name,
+                e.message
+                    ?: e.javaClass.simpleName
+            )
+            null
+        } catch (e: RuntimeException) {
+            debugLog(
+                "RCT client entity metadata failed for entity={}: {}",
+                entity.javaClass.name,
+                e.message
+                    ?: e.javaClass.simpleName
+            )
+            null
+        }
+    }
+
     fun resolveSliderColor(
         classification: TrainerClassification
     ): Int? {

@@ -1,9 +1,7 @@
 package com.kaizzinho.battleintroduction.client
 
-import com.cobblemon.mod.common.api.battles.model.actor.ActorType
 import com.cobblemon.mod.common.api.battles.model.actor.BattleActor
 import com.cobblemon.mod.common.api.battles.model.actor.EntityBackedBattleActor
-import com.cobblemon.mod.common.api.events.CobblemonEvents
 import com.cobblemon.mod.common.battles.actor.PlayerBattleActor
 import com.kaizzinho.battleintroduction.client.config.BattleIntroductionConfig
 import net.fabricmc.api.EnvType
@@ -11,227 +9,41 @@ import net.fabricmc.api.Environment
 import net.minecraft.client.MinecraftClient
 import net.minecraft.entity.LivingEntity
 import org.slf4j.LoggerFactory
-import java.util.UUID
 
 @Environment(EnvType.CLIENT)
 object BattleHandler {
 
-    private val LOGGER =
-        LoggerFactory.getLogger("battleintroduction/BattleHandler")
-
-    fun register() {
-        CobblemonEvents.BATTLE_STARTED_POST.subscribe { event ->
-            onBattleStart(
-                event.battle.battleId,
-                event.battle.actors.toList()
-            )
-        }
-    }
-
-    var activeBattleId: UUID? = null
-        private set
-
-    private fun onBattleStart(
-        battleId: UUID,
-        actors: List<BattleActor>
-    ) {
-        if (!BattleIntroductionConfig.enableBattleIntros) {
-            activeBattleId = null
-            return
-        }
-
-        val client = MinecraftClient.getInstance()
-
-        val localPlayer = client.player ?: run {
-            activeBattleId = null
-            return
-        }
-
-        val localActor = actors
-            .filterIsInstance<PlayerBattleActor>()
-            .firstOrNull { actor ->
-                localPlayer.uuid in actor.getPlayerUUIDs()
-            }
-            ?: run {
-                activeBattleId = null
-                return
-            }
-
-        val opponentActor =
-            actors.firstOrNull { it !== localActor }
-                ?: run {
-                    activeBattleId = null
-                    return
-                }
-
-        val isPvP = opponentActor is PlayerBattleActor
-
-        if (
-            isPvP &&
-            !BattleIntroductionConfig.pvpBattleIntros
-        ) {
-            activeBattleId = null
-            return
-        }
-
-
-        if (
-            opponentActor.type != ActorType.WILD &&
-            !isPvP &&
-            !BattleIntroductionConfig.trainerBattleIntros
-        ) {
-            activeBattleId = null
-            return
-        }
-
-        val opponentEntity =
-            resolveOpponentEntity(opponentActor)
-
-
-// raid rules win before boss and special wild rules
-        val raid =
-            if (
-                opponentActor.type == ActorType.WILD &&
-                BattleIntroductionConfig.raidDenBattleIntros
-            ) {
-                RaidDensCompat.resolve(
-                    opponentActor,
-                    opponentEntity
-                )
-            } else {
-                null
-            }
-
-
-// boss rules win before special wild rules
-        val wildBoss =
-            if (
-                opponentActor.type == ActorType.WILD &&
-                raid == null &&
-                BattleIntroductionConfig.wildBossBattleIntros
-            ) {
-                WildBossesCompat.resolve(
-                    opponentActor,
-                    opponentEntity
-                )
-            } else {
-                null
-            }
-
-        var specialWild =
-            if (
-                opponentActor.type == ActorType.WILD &&
-                raid == null &&
-                wildBoss == null
-            ) {
-                SpecialWildPokemonResolver.resolve(
-                    opponentActor,
-                    opponentEntity
-                )
-            } else {
-                null
-            }
-
-        specialWild =
-            specialWild?.takeIf { presentation ->
-                when (presentation.role) {
-                    SpecialWildPokemonResolver.Role.LEGENDARY ->
-                        BattleIntroductionConfig.legendaryBattleIntros
-
-                    SpecialWildPokemonResolver.Role.MYTHICAL ->
-                        BattleIntroductionConfig.mythicalBattleIntros
-                }
-            }
-
-        if (
-            opponentActor.type == ActorType.WILD &&
-            raid == null &&
-            wildBoss == null &&
-            specialWild == null
-        ) {
-            activeBattleId = null
-            return
-        }
-
-        activeBattleId = battleId
-        raid?.let(RaidDensCompat::debugRaid)
-        wildBoss?.let(WildBossesCompat::debugBoss)
-
-        debugLog(
-            "Starting BattleIntroduction intro: battleId={}, localActor={}, opponentActor={}, opponentType={}, raid={}, wildBoss={}, specialWild={}",
-            battleId,
-            localActor.javaClass.name,
-            opponentActor.javaClass.name,
-            opponentActor.type,
-            raid?.stars ?: "<none>",
-            wildBoss?.tierName ?: "<none>",
-            specialWild?.role ?: "<none>"
+    private val logger =
+        LoggerFactory.getLogger(
+            "battleintroduction/BattleHandler"
         )
-
-        BattleIntroOverlay.trigger(
-            localActor,
-            opponentActor,
-            raid,
-            wildBoss,
-            specialWild
-        )
-    }
 
     fun resolveOpponentEntity(
         opponentActor: BattleActor
     ): LivingEntity? {
-        val client = MinecraftClient.getInstance()
-        val world = client.world ?: return null
+        val world =
+            MinecraftClient.getInstance().world
+                ?: return null
 
-        if (opponentActor is PlayerBattleActor) {
-            val uuid =
-                opponentActor.getPlayerUUIDs()
-                    .firstOrNull()
-                    ?: return null
-
-            return world.players
-                .firstOrNull { it.uuid == uuid }
-        }
+        resolvePlayer(
+            opponentActor,
+            world.players
+        )?.let { return it }
 
         val actorEntity =
             (
                 opponentActor as? EntityBackedBattleActor<*>
             )?.entity as? LivingEntity
 
-        if (actorEntity != null) {
-            val byEntityId =
-                world.getEntityById(actorEntity.id)
-                    as? LivingEntity
-
-            if (byEntityId != null) {
-                debugLog(
-                    "Resolved opponent through EntityBackedBattleActor entity ID: actor={}, entity={}",
-                    opponentActor.javaClass.name,
-                    byEntityId.javaClass.name
-                )
-                return byEntityId
-            }
-
-            val byActorEntityUuid =
-                world.entities
-                    .filterIsInstance<LivingEntity>()
-                    .firstOrNull {
-                        it.uuid == actorEntity.uuid
-                    }
-
-            if (byActorEntityUuid != null) {
-                debugLog(
-                    "Resolved opponent through EntityBackedBattleActor entity UUID: actor={}, entity={}",
-                    opponentActor.javaClass.name,
-                    byActorEntityUuid.javaClass.name
-                )
-                return byActorEntityUuid
-            }
-        }
+        resolveActorEntity(
+            actorEntity,
+            world.entities
+                .filterIsInstance<LivingEntity>()
+        )?.let { return it }
 
         val fallbackUuid =
-            actorEntity?.uuid ?: opponentActor.uuid
-
+            actorEntity?.uuid
+                ?: opponentActor.uuid
         val fallback =
             world.entities
                 .filterIsInstance<LivingEntity>()
@@ -249,12 +61,58 @@ object BattleHandler {
         return fallback
     }
 
+    private fun resolvePlayer(
+        actor: BattleActor,
+        players: List<LivingEntity>
+    ): LivingEntity? {
+        val playerActor =
+            actor as? PlayerBattleActor
+                ?: return null
+        val uuid =
+            playerActor.getPlayerUUIDs()
+                .firstOrNull()
+                ?: return null
+
+        return players.firstOrNull {
+            it.uuid == uuid
+        }
+    }
+
+    private fun resolveActorEntity(
+        actorEntity: LivingEntity?,
+        entities: List<LivingEntity>
+    ): LivingEntity? {
+        if (actorEntity == null) {
+            return null
+        }
+
+        val byEntityId =
+            entities.firstOrNull {
+                it.id == actorEntity.id
+            }
+
+        if (byEntityId != null) {
+            debugLog(
+                "Resolved opponent through EntityBackedBattleActor entity ID: entity={}",
+                byEntityId.javaClass.name
+            )
+            return byEntityId
+        }
+
+        return entities.firstOrNull {
+            it.uuid == actorEntity.uuid
+        }
+    }
+
     private fun debugLog(
         message: String,
         vararg args: Any?
     ) {
         if (BattleIntroductionConfig.debugLogging) {
-            LOGGER.info(message, *args)
+            logger.info(
+                message,
+                *args
+            )
         }
     }
 }

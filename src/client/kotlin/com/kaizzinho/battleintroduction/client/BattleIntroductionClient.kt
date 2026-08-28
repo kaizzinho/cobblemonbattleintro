@@ -17,7 +17,7 @@ class BattleIntroductionClient : ClientModInitializer {
         BattleIntroductionConfig.load()
 
         BattleIntroOverlay.register()
-        BattleHandler.register()
+        BattleIntroClientCoordinator.register()
         BattleIntroductionKeybinds.register()
 
         if (BattleIntroductionConfig.debugLogging) {

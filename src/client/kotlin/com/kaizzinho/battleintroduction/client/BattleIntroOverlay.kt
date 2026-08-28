@@ -503,6 +503,239 @@ object BattleIntroOverlay {
         LOGGER.info("Battle intro HUD renderer registered")
     }
 
+    data class ClientTriggerData(
+        val isOpponentPlayer: Boolean,
+        val opponentName: String,
+        val opponentEntity: LivingEntity?,
+        val localPokemonUUIDs: Set<java.util.UUID>,
+        val opponentPokemonUUIDs: Set<java.util.UUID>,
+        val localBallStacks: List<ItemStack>,
+        val opponentBallStacks: List<ItemStack>,
+        val trainerClassification:
+            RctTrainerMetadataResolver.TrainerClassification? = null,
+        val debugOpponentType: String = "client_packet"
+    )
+
+
+    fun triggerClient(
+        data: ClientTriggerData,
+        raid: RaidDensCompat.RaidPresentation? = null,
+        wildBoss: WildBossesCompat.BossPresentation? = null,
+        specialWild: SpecialWildPokemonResolver.Presentation? = null
+    ) {
+        if (isFlushing) {
+            return
+        }
+
+        val client =
+            MinecraftClient.getInstance()
+
+        localSkinId =
+            getSkinId(client.player)
+        isOpponentPlayer =
+            data.isOpponentPlayer
+        localEntityRef =
+            client.player
+
+        raidPresentation = raid
+        bossPresentation = wildBoss
+        specialWildPresentation =
+            specialWild
+
+        val pokemonPresentationEntity =
+            raid?.entity
+                ?: wildBoss?.entity
+                ?: specialWild?.entity
+
+        val oppEntity =
+            pokemonPresentationEntity
+                ?: data.opponentEntity
+
+        opponentSkinId =
+            if (
+                pokemonPresentationEntity ==
+                    null
+            ) {
+                getSkinId(oppEntity)
+            } else {
+                null
+            }
+
+        opponentEntityRef =
+            oppEntity
+
+        opponentName = when {
+            raid != null ->
+                raid.speciesName
+
+            wildBoss != null ->
+                "${formatBossTier(wildBoss.tierName)} Boss ${wildBoss.speciesName}"
+
+            specialWild != null ->
+                "${specialWild.role.displayName} ${specialWild.speciesName}"
+
+            else ->
+                data.opponentName
+        }
+
+        localPokemonUUIDs =
+            data.localPokemonUUIDs
+        opponentPokemonUUIDs =
+            data.opponentPokemonUUIDs
+        localBallStacks =
+            data.localBallStacks
+        opponentBallStacks =
+            if (
+                pokemonPresentationEntity ==
+                    null
+            ) {
+                data.opponentBallStacks
+            } else {
+                emptyList()
+            }
+
+        resolveTopBarColorClient(
+            opponentEntity = oppEntity,
+            isPvP =
+                data.isOpponentPlayer,
+            raid = raid,
+            wildBoss = wildBoss,
+            specialWild = specialWild,
+            trainerClassification =
+                data.trainerClassification,
+            debugOpponentType =
+                data.debugOpponentType
+        )
+
+        seedParticles(topParticles)
+        seedParticles(botParticles)
+
+        pendingCorePackets.clear()
+        pendingPlayerPackets.clear()
+        pendingOpponentPackets.clear()
+        entityOwnership.clear()
+        battleSpawnInfo.clear()
+        facingDebugSnapshots.clear()
+
+        if (
+            pokemonPresentationEntity !=
+                null
+        ) {
+            registerBattlePokemonSpawn(
+                entityId =
+                    pokemonPresentationEntity.id,
+                isPlayerOwned = false,
+                x =
+                    pokemonPresentationEntity.x,
+                z =
+                    pokemonPresentationEntity.z
+            )
+
+            debugLog(
+                "[FACING-DEBUG] pre-registered existing wild opponent entityId={} pokemon={} battleId={}",
+                pokemonPresentationEntity.id,
+                pokemonPresentationEntity
+                    .pokemon.uuid,
+                pokemonPresentationEntity
+                    .battleId
+            )
+        }
+
+        introStartedAtMs =
+            System.currentTimeMillis()
+        debugSequence = 0L
+
+        progress = 0f
+        lastTimeMs = 0L
+        state = State.FLICKER
+
+        debugLog(
+            "[t+0ms] INTRO START | source={} localParty={} opponentParty={} state={}",
+            data.debugOpponentType,
+            localPokemonUUIDs.size,
+            opponentPokemonUUIDs.size,
+            state
+        )
+    }
+
+
+    private fun resolveTopBarColorClient(
+        opponentEntity: LivingEntity?,
+        isPvP: Boolean,
+        raid: RaidDensCompat.RaidPresentation?,
+        wildBoss: WildBossesCompat.BossPresentation?,
+        specialWild: SpecialWildPokemonResolver.Presentation?,
+        trainerClassification:
+            RctTrainerMetadataResolver.TrainerClassification?,
+        debugOpponentType: String
+    ) {
+        if (raid != null) {
+            val color =
+                raid.typeColorRgb
+            topColorA =
+                brighten(color, 0.68f)
+            topColorB =
+                brighten(color, 1.42f)
+            return
+        }
+
+        if (wildBoss != null) {
+            val color =
+                bossTierColor(
+                    wildBoss.tierName
+                )
+            topColorA =
+                brighten(color, 0.72f)
+            topColorB =
+                brighten(color, 1.45f)
+            return
+        }
+
+        if (specialWild != null) {
+            val color =
+                specialWild.baseColorRgb
+            topColorA =
+                brighten(color, 0.68f)
+            topColorB =
+                brighten(color, 1.42f)
+            return
+        }
+
+        if (isPvP) {
+            topColorA = PVP_COLOR_A
+            topColorB = PVP_COLOR_B
+            return
+        }
+
+        val rctColor =
+            trainerClassification?.let {
+                RctTrainerMetadataResolver
+                    .resolveSliderColor(it)
+            }
+
+        if (
+            trainerClassification != null &&
+            rctColor != null
+        ) {
+            topColorA =
+                brighten(rctColor, 0.7f)
+            topColorB =
+                brighten(rctColor, 1.5f)
+            return
+        }
+
+        topColorA = DEFAULT_COLOR_A
+        topColorB = DEFAULT_COLOR_B
+
+        debugLog(
+            "Client packet slider palette fell back to default trainer colors: source={} entity={}",
+            debugOpponentType,
+            opponentEntity?.javaClass?.name
+                ?: "<none>"
+        )
+    }
+
+
     fun trigger(
         localActor: BattleActor,
         opponentActor: BattleActor,

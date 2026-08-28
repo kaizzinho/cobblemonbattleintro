@@ -7,6 +7,8 @@ class BattleIntroduction : ModInitializer {
 
     override fun onInitialize() {
         LOGGER.info("Initializing BattleIntroduction common handlers")
+        BattleIntroNetworking.register()
+        BattleIntroServerBridge.register()
         AutoRecallHandler.register()
     }
 

@@ -30,7 +30,7 @@ The current version supports:
 
 Ordinary wild Pokémon remain untouched.
 
-The visual presentation runs on the client. A small common-side handler also safely recalls active player-owned Pokémon before supported battles, so server installation is recommended for multiplayer. Client installation remains optional per player: players without Battle Introduction can play on the same server and receive the normal Cobblemon battle presentation while players with the mod see their own local introduction.
+The visual presentation runs on the client. On servers that also have Battle Introduction installed, a small optional server bridge sends an authoritative encounter descriptor to modded clients before the battle presentation begins. The server only sends this payload to clients that advertise Battle Introduction support, so players without the mod can join and battle normally. A client with Battle Introduction can also use a packet-based fallback on servers that do not have the mod installed, including public servers.
 
 ### What it does
 
@@ -153,7 +153,7 @@ The global **Animation Speed** setting scales the visual stages while the hold d
 
 #### Legendary and Mythical encounters
 
-![Legendary encounter](docs/images/legendary.png)
+![Legendary encounter](docs/images/legendary.png)git
 
 #### 2D Pokémon portraits
 
@@ -229,6 +229,11 @@ The integration is soft. Battle Introduction still loads normally when Cobblemon
 ### Multiplayer behavior
 
 Battle Introduction is designed so modded and unmodded clients can share the same server.
+
+There are two multiplayer detection paths:
+
+- **Server-authoritative mode:** when the server also has Battle Introduction, the server classifies the encounter and sends a small optional descriptor only to clients that support the mod. This is the most reliable path for WildBosses and Raid Dens because the authoritative server entity is available there.
+- **Client fallback mode:** when joining a public or private server without Battle Introduction, the client observes Cobblemon's `BattleInitializePacket` and builds the intro from synchronized client data. Trainer, PvP, Legendary/Mythical and compatible addon-backed encounters can still receive intros without requiring the server to install Battle Introduction. Server-only metadata that is not synchronized by another mod cannot be inferred perfectly, so the server bridge provides the highest-fidelity classification when available.
 
 - **PvP:** a modded player sees their own introduction, while an unmodded opponent enters the normal Cobblemon battle immediately. PvP intros are always skippable.
 - **Raid Dens:** each participant handles the intro independently. Modded players see the raid intro, unmodded players do not, and the raid itself is never globally paused or synchronized by Battle Introduction.
@@ -899,7 +904,7 @@ A versão atual suporta:
 
 Pokémon selvagens comuns continuam sem o slider.
 
-A parte visual é executada no cliente. Um pequeno handler comum também recolhe com segurança Pokémon ativos pertencentes aos jogadores antes de batalhas compatíveis, portanto a instalação no servidor é recomendada em multiplayer. A instalação no cliente continua opcional para cada jogador: jogadores sem Battle Introduction podem jogar no mesmo servidor e recebem a apresentação normal do Cobblemon, enquanto jogadores com o mod veem sua própria introdução local.
+A parte visual é executada no cliente. Em servidores que também possuem Battle Introduction instalado, uma pequena ponte opcional do servidor envia uma descrição autoritativa do encontro para clientes com o mod antes do início da apresentação da batalha. O servidor só envia esse payload para clientes que anunciam suporte ao Battle Introduction, então jogadores sem o mod podem entrar e batalhar normalmente. Um cliente com Battle Introduction também pode usar um fallback baseado nos pacotes do Cobblemon em servidores que não possuem o mod, incluindo servidores públicos.
 
 ### Como funciona
 
@@ -1097,6 +1102,11 @@ A integração é soft. O Battle Introduction continua iniciando normalmente qua
 ### Comportamento em multiplayer
 
 Battle Introduction foi projetado para permitir que clientes com e sem o mod joguem no mesmo servidor.
+
+Existem dois caminhos de detecção em multiplayer:
+
+- **Modo autoritativo do servidor:** quando o servidor também possui Battle Introduction, o servidor classifica o encontro e envia uma pequena descrição opcional apenas para clientes que suportam o mod. Esse é o caminho mais confiável para WildBosses e Raid Dens porque a entidade autoritativa do servidor está disponível nesse momento.
+- **Fallback do cliente:** ao entrar em um servidor público ou privado sem Battle Introduction, o cliente observa o `BattleInitializePacket` do Cobblemon e monta a intro usando os dados sincronizados no cliente. Treinadores, PvP, Lendários/Míticos e encontros de addons compatíveis ainda podem receber intros sem exigir que o servidor instale Battle Introduction. Metadados exclusivos do servidor que outro mod não sincroniza não podem ser inferidos perfeitamente, então a ponte do servidor oferece a classificação mais completa quando disponível.
 
 - **PvP:** um jogador com o mod vê sua própria introdução, enquanto um oponente sem o mod entra imediatamente na batalha normal do Cobblemon. Intros PvP são sempre puláveis.
 - **Raid Dens:** cada participante trata a intro de forma independente. Jogadores com o mod veem a intro da raid, jogadores sem o mod não veem, e a raid nunca é pausada ou sincronizada globalmente pelo Battle Introduction.

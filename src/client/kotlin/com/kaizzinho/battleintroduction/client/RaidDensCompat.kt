@@ -140,6 +140,50 @@ object RaidDensCompat {
         return null
     }
 
+    fun resolveClientEntity(
+        entity: LivingEntity?
+    ): RaidPresentation? {
+        val pokemonEntity =
+            entity as? PokemonEntity
+                ?: return null
+
+        if (
+            !FabricLoader.getInstance()
+                .isModLoaded(MOD_ID)
+        ) {
+            return null
+        }
+
+        val methods =
+            accessorMethods
+                ?: return null
+
+        return resolveCandidate(
+            candidate =
+                Candidate(
+                    source = "client_packet",
+                    entity = pokemonEntity
+                ),
+            renderEntity = pokemonEntity,
+            methods = methods
+        )
+    }
+
+    fun fromAuthoritative(
+        entity: PokemonEntity,
+        stars: String,
+        typeColorRgb: Int
+    ): RaidPresentation =
+        RaidPresentation(
+            entity = entity,
+            stars =
+                stars.takeIf {
+                    it.isNotBlank()
+                } ?: "★",
+            typeColorRgb =
+                typeColorRgb and 0xFFFFFF
+        )
+
     private fun resolveCandidate(
         candidate: Candidate,
         renderEntity: PokemonEntity,

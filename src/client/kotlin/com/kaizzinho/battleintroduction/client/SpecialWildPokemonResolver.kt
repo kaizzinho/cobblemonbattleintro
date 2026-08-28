@@ -38,8 +38,15 @@ object SpecialWildPokemonResolver {
         entity: LivingEntity?
     ): Presentation? {
         if (actor.type != ActorType.WILD) return null
+        return resolveEntity(entity)
+    }
 
-        val pokemonEntity = entity as? PokemonEntity ?: return null
+    fun resolveEntity(
+        entity: LivingEntity?
+    ): Presentation? {
+        val pokemonEntity =
+            entity as? PokemonEntity
+                ?: return null
         val pokemon = pokemonEntity.pokemon
         val labels = pokemon.species.labels
 
@@ -79,6 +86,27 @@ object SpecialWildPokemonResolver {
         return presentation
     }
 
+
+    fun fromAuthoritative(
+        entity: PokemonEntity,
+        role: Role,
+        primaryTypeId: String
+    ): Presentation {
+        val normalized =
+            primaryTypeId.lowercase(
+                Locale.ROOT
+            )
+
+        return Presentation(
+            entity = entity,
+            role = role,
+            primaryTypeId = normalized,
+            baseColorRgb =
+                colorForPrimaryType(
+                    normalized
+                )
+        )
+    }
 
     fun colorForPrimaryType(typeId: String): Int = when (
         typeId.lowercase(Locale.ROOT)
