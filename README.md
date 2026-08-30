@@ -153,7 +153,7 @@ The global **Animation Speed** setting scales the visual stages while the hold d
 
 #### Legendary and Mythical encounters
 
-![Legendary encounter](docs/images/legendary.png)git
+![Legendary encounter](docs/images/legendary.png)
 
 #### 2D Pokémon portraits
 

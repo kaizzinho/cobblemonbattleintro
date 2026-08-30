@@ -26,6 +26,8 @@ object BattleIntroServerBridge {
         "com.necro.raid.dens.common.raids.helpers.RaidHelper"
     private const val WILDBOSS_API_CLASS =
         "com.kaizzinho.wildbosses.api.WildBossIntegrationApi"
+    private const val DEFAULT_TRAINER_BALL_ID =
+        "cobblemon:poke_ball"
 
     private val logger =
         LoggerFactory.getLogger(
@@ -41,7 +43,8 @@ object BattleIntroServerBridge {
         val opponentName: String,
         val detail: String = "",
         val level: Int = 0,
-        val colorRgb: Int = 0
+        val colorRgb: Int = 0,
+        val fallbackPartySize: Int = 0
     )
 
     private data class WildBossApi(
@@ -165,7 +168,10 @@ object BattleIntroServerBridge {
             opponentPokemonUuids =
                 opponentPokemonUuids(opponentActor),
             opponentBallItemIds =
-                opponentBallItemIds(opponentActor)
+                opponentBallItemIds(
+                    opponentActor,
+                    presentation
+                )
         )
 
     private fun opponentPokemonUuids(
@@ -176,20 +182,44 @@ object BattleIntroServerBridge {
             .map { it.uuid }
 
     private fun opponentBallItemIds(
-        actor: BattleActor
-    ): List<String> =
-        actor.pokemonList
-            .take(6)
-            .mapNotNull { battlePokemon ->
-                runCatching {
-                    Registries.ITEM.getId(
-                        battlePokemon
-                            .effectedPokemon
-                            .caughtBall
-                            .item()
-                    ).toString()
-                }.getOrNull()
+        actor: BattleActor,
+        presentation: ServerPresentation
+    ): List<String> {
+        val pokemon =
+            actor.pokemonList
+                .take(6)
+        val resolved =
+            pokemon
+                .mapNotNull { battlePokemon ->
+                    runCatching {
+                        Registries.ITEM.getId(
+                            battlePokemon
+                                .effectedPokemon
+                                .caughtBall
+                                .item()
+                        ).toString()
+                    }.getOrNull()
+                }
+
+        if (presentation.kind != BattleIntroKind.TRAINER) {
+            return resolved
+        }
+
+        val expectedSize =
+            maxOf(
+                pokemon.size,
+                presentation.fallbackPartySize
+            ).coerceIn(0, 6)
+
+        if (expectedSize <= resolved.size) {
+            return resolved
+        }
+
+        return resolved +
+            List(expectedSize - resolved.size) {
+                DEFAULT_TRAINER_BALL_ID
             }
+    }
 
     private fun classify(
         opponentActor: BattleActor
@@ -218,13 +248,38 @@ object BattleIntroServerBridge {
 
     private fun trainerPresentation(
         actor: BattleActor
-    ): ServerPresentation =
-        ServerPresentation(
+    ): ServerPresentation {
+        val entity = actorEntity(actor)
+        val rctMetadata =
+            RctServerTrainerMetadata.resolve(entity)
+        val actorName = actor.getName().string
+        val opponentName =
+            rctMetadata
+                ?.displayName
+                ?.takeIf { it.isNotBlank() }
+                ?: actorName
+
+        if (rctMetadata != null) {
+            logger.debug(
+                "Resolved RCT intro metadata trainerId={} name={} partySize={} actorPartySize={}",
+                rctMetadata.trainerId,
+                opponentName,
+                rctMetadata.partySize,
+                actor.pokemonList.size
+            )
+        }
+
+        return ServerPresentation(
             kind = BattleIntroKind.TRAINER,
-            opponentEntity = actorEntity(actor),
+            opponentEntity = entity,
             opponentPokemonEntity = null,
-            opponentName = actor.getName().string
+            opponentName = opponentName,
+            fallbackPartySize =
+                rctMetadata
+                    ?.partySize
+                    ?: 0
         )
+    }
 
     private fun wildPresentation(
         actor: BattleActor
