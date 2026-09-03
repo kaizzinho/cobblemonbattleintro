@@ -29,7 +29,6 @@
     ]
   },
   "mixins": [
-    "battleintroduction.mixins.json",
     {
       "config": "battleintroduction.client.mixins.json",
       "environment": "client"

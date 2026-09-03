@@ -1,7 +1,5 @@
 package com.kaizzinho.battleintroduction.client
 
-import com.cobblemon.mod.common.api.battles.model.actor.BattleActor
-import com.cobblemon.mod.common.battles.actor.PlayerBattleActor
 import com.cobblemon.mod.common.entity.pokemon.PokemonEntity
 import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
@@ -12,9 +10,7 @@ import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gui.DrawContext
 import net.minecraft.client.network.AbstractClientPlayerEntity
 import net.minecraft.entity.LivingEntity
-import net.minecraft.item.Item
 import net.minecraft.item.ItemStack
-import net.minecraft.registry.Registries
 import net.minecraft.sound.SoundEvent
 import net.minecraft.sound.SoundEvents
 import net.minecraft.client.sound.PositionedSoundInstance
@@ -736,211 +732,6 @@ object BattleIntroOverlay {
     }
 
 
-    fun trigger(
-        localActor: BattleActor,
-        opponentActor: BattleActor,
-        raid: RaidDensCompat.RaidPresentation? = null,
-        wildBoss: WildBossesCompat.BossPresentation? = null,
-        specialWild: SpecialWildPokemonResolver.Presentation? = null
-    ) {
-        if (isFlushing) return
-        val client = MinecraftClient.getInstance()
-
-        localSkinId    = getSkinId(client.player)
-        isOpponentPlayer = opponentActor is PlayerBattleActor
-        localEntityRef = client.player
-
-        raidPresentation = raid
-        bossPresentation = wildBoss
-        specialWildPresentation = specialWild
-
-        val pokemonPresentationEntity =
-            raid?.entity ?: wildBoss?.entity ?: specialWild?.entity
-
-        val oppEntity =
-            pokemonPresentationEntity
-                ?: BattleHandler.resolveOpponentEntity(opponentActor)
-
-        opponentSkinId =
-            if (pokemonPresentationEntity == null) getSkinId(oppEntity) else null
-
-        opponentEntityRef = oppEntity
-        opponentName = when {
-            raid != null ->
-                raid.speciesName
-
-            wildBoss != null ->
-                "${formatBossTier(wildBoss.tierName)} Boss ${wildBoss.speciesName}"
-
-            specialWild != null ->
-                "${specialWild.role.displayName} ${specialWild.speciesName}"
-
-            else ->
-                resolveOpponentName(opponentActor, oppEntity)
-        }
-
-        localPokemonUUIDs = localActor.pokemonList.map { it.uuid }.toSet()
-        opponentPokemonUUIDs = opponentActor.pokemonList.map { it.uuid }.toSet()
-        localBallStacks = localActor.pokemonList.take(6).map { resolveBallStack(it.effectedPokemon.caughtBall) }
-        opponentBallStacks =
-            if (pokemonPresentationEntity == null) {
-                opponentActor.pokemonList
-                    .take(6)
-                    .map {
-                        resolveBallStack(
-                            it.effectedPokemon.caughtBall
-                        )
-                    }
-            } else {
-                emptyList()
-            }
-
-        resolveTopBarColor(
-            opponentActor,
-            oppEntity,
-            isOpponentPlayer,
-            raid,
-            wildBoss,
-            specialWild
-        )
-
-        seedParticles(topParticles)
-        seedParticles(botParticles)
-
-        pendingCorePackets.clear()
-        pendingPlayerPackets.clear()
-        pendingOpponentPackets.clear()
-        entityOwnership.clear()
-        battleSpawnInfo.clear()
-        facingDebugSnapshots.clear()
-
-        if (pokemonPresentationEntity != null) {
-            registerBattlePokemonSpawn(
-                entityId = pokemonPresentationEntity.id,
-                isPlayerOwned = false,
-                x = pokemonPresentationEntity.x,
-                z = pokemonPresentationEntity.z
-            )
-
-            debugLog(
-                "[FACING-DEBUG] pre-registered existing wild opponent entityId={} pokemon={} battleId={}",
-                pokemonPresentationEntity.id,
-                pokemonPresentationEntity.pokemon.uuid,
-                pokemonPresentationEntity.battleId
-            )
-        }
-
-        introStartedAtMs = System.currentTimeMillis()
-        debugSequence = 0L
-
-        progress   = 0f
-        lastTimeMs = 0L
-        state      = State.FLICKER
-
-        debugLog(
-            "[t+0ms] INTRO START | localParty={}, opponentParty={}, state={}",
-            localPokemonUUIDs.size,
-            opponentPokemonUUIDs.size,
-            state
-        )
-    }
-
-    private fun resolveTopBarColor(
-        opponentActor: BattleActor,
-        opponentEntity: LivingEntity?,
-        isPvP: Boolean,
-        raid: RaidDensCompat.RaidPresentation?,
-        wildBoss: WildBossesCompat.BossPresentation?,
-        specialWild: SpecialWildPokemonResolver.Presentation?
-    ) {
-        if (raid != null) {
-            val color = raid.typeColorRgb
-            topColorA = brighten(color, 0.68f)
-            topColorB = brighten(color, 1.42f)
-
-            debugLog(
-                "Raid Dens slider palette: stars={} species={} color=0x{}",
-                raid.stars.length,
-                raid.speciesName,
-                "%06X".format(color and 0xFFFFFF)
-            )
-            return
-        }
-
-        if (wildBoss != null) {
-            val color = bossTierColor(wildBoss.tierName)
-            topColorA = brighten(color, 0.72f)
-            topColorB = brighten(color, 1.45f)
-            debugLog(
-                "Boss slider palette: tier={} color=0x{}",
-                wildBoss.tierName,
-                "%06X".format(color and 0xFFFFFF)
-            )
-            return
-        }
-
-        if (specialWild != null) {
-            val color = specialWild.baseColorRgb
-            topColorA = brighten(color, 0.68f)
-            topColorB = brighten(color, 1.42f)
-
-            debugLog(
-                "Special wild slider palette: role={} species={} primaryType={} color=0x{}",
-                specialWild.role,
-                specialWild.speciesName,
-                specialWild.primaryTypeId,
-                "%06X".format(color and 0xFFFFFF)
-            )
-            return
-        }
-
-        if (isPvP) {
-            topColorA = PVP_COLOR_A
-            topColorB = PVP_COLOR_B
-            return
-        }
-
-        val classification =
-            RctTrainerMetadataResolver.resolve(
-                opponentActor,
-                opponentEntity
-            )
-
-        val rctColor = classification?.let {
-            RctTrainerMetadataResolver
-                .resolveSliderColor(it)
-        }
-
-        if (classification != null && rctColor != null) {
-            topColorA = brighten(rctColor, 0.7f)
-            topColorB = brighten(rctColor, 1.5f)
-
-            debugLog(
-                "Opponent slider palette resolved from RCT: trainerId='{}', " +
-                    "rawType='{}', optional={}, role={}, region={}, source={}, " +
-                    "color=0x{}",
-                classification.trainerId,
-                classification.rawType,
-                classification.optional,
-                classification.role,
-                classification.region ?: "<none>",
-                classification.source,
-                "%06X".format(rctColor and 0xFFFFFF)
-            )
-            return
-        }
-
-        topColorA = DEFAULT_COLOR_A
-        topColorB = DEFAULT_COLOR_B
-
-        debugLog(
-            "Opponent slider palette fell back to default trainer colors: " +
-                "actor={}, entity={}",
-            opponentActor.javaClass.name,
-            opponentEntity?.javaClass?.name ?: "<none>"
-        )
-    }
-
     private fun bossTierColor(tierName: String): Int = when (tierName.uppercase()) {
         "UNCOMMON" -> 0x3FA65A
         "RARE" -> 0x14B8A6
@@ -962,66 +753,11 @@ object BattleIntroOverlay {
         return argb(255, ch(16), ch(8), ch(0))
     }
 
-    private fun resolveOpponentName(actor: BattleActor, entity: LivingEntity?): String {
-        if (actor is PlayerBattleActor) {
-            val uuid = actor.getPlayerUUIDs().firstOrNull() ?: return "Pokémon Trainer"
-            val name = MinecraftClient.getInstance().world
-                ?.players?.firstOrNull { it.uuid == uuid }?.name?.string
-            return "Pokémon Trainer ${name ?: "Unknown"}"
-        }
-        if (RctTrainerMetadataResolver.isTrainerEntity(entity)) {
-            return entity?.name?.string ?: "???"
-        }
-        return entity?.name?.string ?: "???"
-    }
-
     private fun getSkinId(entity: LivingEntity?): Identifier? {
         if (entity is AbstractClientPlayerEntity) return entity.skinTextures.texture
         return null
     }
 
-
-    private fun resolveBallStack(ball: Any): ItemStack {
-        val fallback = ItemStack(Registries.ITEM.get(Identifier.of("cobblemon", "poke_ball")))
-
-        try {
-            val methodNames = listOf("item", "getItem", "asItem", "getItemStack", "itemStack")
-            for (name in methodNames) {
-                val method = ball.javaClass.methods.firstOrNull {
-                    it.name == name && it.parameterCount == 0
-                } ?: continue
-
-                when (val value = method.invoke(ball)) {
-                    is ItemStack -> return value.copy()
-                    is Item -> return ItemStack(value)
-                    is Identifier -> {
-                        return ItemStack(Registries.ITEM.get(value))
-                    }
-                    is String -> {
-                        val id = Identifier.tryParse(value)
-                        if (id != null) return ItemStack(Registries.ITEM.get(id))
-                    }
-                }
-            }
-
-            for (field in ball.javaClass.declaredFields) {
-                field.isAccessible = true
-                when (val value = field.get(ball)) {
-                    is ItemStack -> return value.copy()
-                    is Item -> return ItemStack(value)
-                    is Identifier -> return ItemStack(Registries.ITEM.get(value))
-                    is String -> {
-                        val id = Identifier.tryParse(value)
-                        if (id != null) return ItemStack(Registries.ITEM.get(id))
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            LOGGER.warn("Could not resolve caught-ball item from {}: {}", ball.javaClass.name, e.message)
-        }
-
-        return fallback
-    }
 
 
     private fun playVanillaUiSound(

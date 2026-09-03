@@ -22,6 +22,7 @@ object BattleIntroClientCoordinator {
 
     private const val DESCRIPTOR_TTL_MS = 10_000L
     private const val STARTED_TTL_MS = 120_000L
+    private const val DEFAULT_TRAINER_BALL_ID = "cobblemon:poke_ball"
 
     private val logger =
         LoggerFactory.getLogger(
@@ -554,23 +555,111 @@ object BattleIntroClientCoordinator {
     private fun opponentBallStacks(
         context: StartContext
     ): List<ItemStack> {
-        val authoritativeBalls =
+        val fallbackBall =
+            ballStackFromId(
+                DEFAULT_TRAINER_BALL_ID
+            )
+        val authoritativeIds =
             context.descriptor
                 ?.opponentBallItemIds
                 .orEmpty()
-                .mapNotNull(::ballStackFromId)
+        val authoritativeBalls =
+            authoritativeIds.mapNotNull { id ->
+                ballStackFromId(id)
+                    ?: fallbackBall?.copy()
+            }
+
+        val rctPartySize =
+            RctTrainerMetadataResolver
+                .resolvePartySize(
+                    context.opponentEntity
+                )
 
         if (authoritativeBalls.isNotEmpty()) {
-            return authoritativeBalls
+            val expectedSize =
+                if (
+                    context.descriptor?.kind ==
+                        BattleIntroKind.TRAINER
+                ) {
+                    maxOf(
+                        authoritativeBalls.size,
+                        rctPartySize
+                    ).coerceIn(0, 6)
+                } else {
+                    authoritativeBalls.size
+                }
+            val completed =
+                completeTrainerBallRow(
+                    authoritativeBalls,
+                    expectedSize,
+                    fallbackBall
+                )
+
+            debugLog(
+                "[RCT-PARTY] source={} authoritativeIds={} rctPartySize={} renderedBalls={}",
+                context.source,
+                authoritativeIds,
+                rctPartySize,
+                completed.size
+            )
+
+            return completed
         }
 
-        return context.opponentActor
-            .activePokemon
-            .mapNotNull { dto ->
-                dto?.properties
-                    ?.pokeball
-                    ?.let(::ballStackFromId)
-            }
+        val activeBalls =
+            context.opponentActor
+                .activePokemon
+                .mapNotNull { dto ->
+                    if (dto == null) {
+                        null
+                    } else {
+                        dto.properties
+                            ?.pokeball
+                            ?.let(::ballStackFromId)
+                            ?: fallbackBall?.copy()
+                    }
+                }
+        val completed =
+            completeTrainerBallRow(
+                activeBalls,
+                maxOf(
+                    activeBalls.size,
+                    rctPartySize
+                ).coerceIn(0, 6),
+                fallbackBall
+            )
+
+        if (rctPartySize > 0) {
+            debugLog(
+                "[RCT-PARTY] source={} activeBalls={} rctPartySize={} renderedBalls={}",
+                context.source,
+                activeBalls.size,
+                rctPartySize,
+                completed.size
+            )
+        }
+
+        return completed
+    }
+
+    private fun completeTrainerBallRow(
+        resolved: List<ItemStack>,
+        expectedSize: Int,
+        fallbackBall: ItemStack?
+    ): List<ItemStack> {
+        if (
+            expectedSize <= resolved.size ||
+            fallbackBall == null
+        ) {
+            return resolved.take(6)
+        }
+
+        return (
+            resolved +
+                List(expectedSize - resolved.size) {
+                    fallbackBall.copy()
+                }
+        ).take(6)
     }
 
     private fun opponentName(

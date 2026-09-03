@@ -188,21 +188,22 @@ object BattleIntroServerBridge {
         val pokemon =
             actor.pokemonList
                 .take(6)
-        val resolved =
-            pokemon
-                .mapNotNull { battlePokemon ->
-                    runCatching {
-                        Registries.ITEM.getId(
-                            battlePokemon
-                                .effectedPokemon
-                                .caughtBall
-                                .item()
-                        ).toString()
-                    }.getOrNull()
-                }
+
+        val occupiedBalls =
+            pokemon.map { battlePokemon ->
+                runCatching {
+                    Registries.ITEM.getId(
+                        battlePokemon
+                            .effectedPokemon
+                            .caughtBall
+                            .item()
+                    ).toString()
+                }.getOrNull()
+                    ?: DEFAULT_TRAINER_BALL_ID
+            }
 
         if (presentation.kind != BattleIntroKind.TRAINER) {
-            return resolved
+            return occupiedBalls
         }
 
         val expectedSize =
@@ -211,14 +212,25 @@ object BattleIntroServerBridge {
                 presentation.fallbackPartySize
             ).coerceIn(0, 6)
 
-        if (expectedSize <= resolved.size) {
-            return resolved
-        }
-
-        return resolved +
-            List(expectedSize - resolved.size) {
-                DEFAULT_TRAINER_BALL_ID
+        val completed =
+            if (expectedSize > occupiedBalls.size) {
+                occupiedBalls +
+                    List(expectedSize - occupiedBalls.size) {
+                        DEFAULT_TRAINER_BALL_ID
+                    }
+            } else {
+                occupiedBalls
             }
+
+        logger.debug(
+            "[RCT-PARTY] actorClass={} actorPartySize={} fallbackPartySize={} payloadBalls={}",
+            actor.javaClass.name,
+            pokemon.size,
+            presentation.fallbackPartySize,
+            completed
+        )
+
+        return completed
     }
 
     private fun classify(

@@ -228,6 +228,62 @@ object RctTrainerMetadataResolver {
         }
     }
 
+    fun resolvePartySize(
+        entity: LivingEntity?
+    ): Int {
+        if (
+            entity == null ||
+            !FabricLoader.getInstance()
+                .isModLoaded(RCT_MOD_ID) ||
+            !isTrainerEntity(entity)
+        ) {
+            return 0
+        }
+
+        return runCatching {
+            val trainerId =
+                normalizeId(
+                    invokeNoArg(entity, "getTrainerId")
+                        ?.toString()
+                ) ?: return@runCatching 0
+            val data =
+                resolveTrainerData(
+                    entity,
+                    trainerId
+                ) ?: return@runCatching 0
+            val trainerTeam =
+                invokeNoArg(
+                    data,
+                    "getTrainerTeam"
+                ) ?: data
+            val team =
+                invokeNoArg(
+                    trainerTeam,
+                    "getTeam"
+                )
+            val size =
+                collectionSize(team)
+                    .coerceIn(0, 6)
+
+            debugLog(
+                "[RCT-PARTY] client definition trainerId='{}' dataClass={} teamClass={} partySize={}",
+                trainerId,
+                data.javaClass.name,
+                trainerTeam.javaClass.name,
+                size
+            )
+
+            size
+        }.getOrElse {
+            debugLog(
+                "[RCT-PARTY] client party-size lookup failed entity={}: {}",
+                entity.javaClass.name,
+                it.message ?: it.javaClass.simpleName
+            )
+            0
+        }
+    }
+
     fun resolveSliderColor(
         classification: TrainerClassification
     ): Int? {
@@ -664,6 +720,22 @@ object RctTrainerMetadataResolver {
             null
         }
     }
+
+    private fun collectionSize(
+        value: Any?
+    ): Int =
+        when (value) {
+            null -> 0
+            is Collection<*> -> value.size
+            is Map<*, *> -> value.size
+            is Iterable<*> -> value.count()
+            else ->
+                if (value.javaClass.isArray) {
+                    java.lang.reflect.Array.getLength(value)
+                } else {
+                    0
+                }
+        }
 
     private fun normalizeId(
         value: String?

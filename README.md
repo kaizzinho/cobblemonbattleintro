@@ -486,7 +486,8 @@ Battle Introduction can resolve:
 - optional flag;
 - native RCT color;
 - trainer role;
-- region.
+- region;
+- configured trainer party size for the party-ball occupancy fallback.
 
 Recognized roles:
 
@@ -515,7 +516,7 @@ Canonical role colors are used where available, with safe fallback colors for Gy
 
 Each trainer side can show up to six party slots.
 
-Occupied slots use the Pokémon's actual capture ball when it can be resolved.
+Occupied slots use the Pokémon's actual capture ball when it can be resolved. For RCT trainers, if the instantiated Cobblemon battle actor does not expose the full party yet, Battle Introduction reads the configured RCT team size and uses ordinary Poké Balls for those known occupied slots. RCT trainer definitions do not provide capture-ball data, so the fallback represents party occupancy without inventing a specific capture ball.
 
 Empty slots use Battle Introduction's inactive ball texture.
 
@@ -796,7 +797,7 @@ For the complete intended behavior, install the mod on both the client and dedic
 
 The VS rendering and configuration are client-side.
 
-The common/server side provides the safe player Pokémon auto-recall handler.
+The common/server side provides the safe player Pokémon auto-recall handler and the optional authoritative encounter-descriptor bridge used by modded clients for the highest-fidelity trainer, WildBosses, and Raid Dens classification.
 
 Optional integrations should be installed according to the requirements of those mods.
 
@@ -1357,7 +1358,8 @@ O Battle Introduction pode resolver:
 - flag optional;
 - cor nativa do tipo;
 - role;
-- região.
+- região;
+- tamanho configurado da party do treinador para o fallback visual das Poké Bolas.
 
 Roles reconhecidas:
 
@@ -1384,7 +1386,7 @@ Isso permite classificar progressões regionais sem uma lista hardcoded enorme d
 
 Cada lado pode mostrar até seis slots.
 
-Slots ocupados usam a Poké Bola real de captura quando ela pode ser resolvida.
+Slots ocupados usam a Poké Bola real de captura quando ela pode ser resolvida. Para treinadores do RCT, se o ator de batalha instanciado pelo Cobblemon ainda não expuser a party completa, o Battle Introduction lê o tamanho do time configurado no RCT e usa Poké Bolas comuns nesses slots ocupados conhecidos. As definições de treinador do RCT não fornecem dados da Poké Bola de captura, então esse fallback representa a ocupação da party sem inventar uma Poké Bola específica.
 
 Slots vazios usam a textura inativa do Battle Introduction.
 
@@ -1657,7 +1659,7 @@ Para o comportamento completo, instale o mod no cliente e no servidor dedicado.
 
 A renderização VS e as configurações são client-side.
 
-O lado comum/servidor fornece o handler seguro de auto recall dos Pokémon do jogador.
+O lado comum/servidor fornece o handler seguro de auto recall dos Pokémon do jogador e a ponte opcional de descritores autoritativos usada pelos clientes com o mod para obter a classificação mais completa de treinadores, WildBosses e Raid Dens.
 
 Integrações opcionais devem ser instaladas de acordo com os requisitos dos respectivos mods.
 

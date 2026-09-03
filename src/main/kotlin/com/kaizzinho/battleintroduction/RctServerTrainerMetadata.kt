@@ -56,10 +56,19 @@ object RctServerTrainerMetadata {
                 resolveTrainerData(entity, trainerId)
                     ?: return null
 
+            // RCT 0.17.x stores the battle team inside TrainerMobData#getTrainerTeam().
+            // Keep the direct-data fallback for older/alternate RCT layouts.
+            val trainerTeam =
+                readMember(
+                    data,
+                    "getTrainerTeam",
+                    "trainerTeam"
+                ) ?: data
+
             val identity =
                 displayString(
                     readMember(
-                        data,
+                        trainerTeam,
                         "getIdentity",
                         "identity"
                     )
@@ -68,12 +77,24 @@ object RctServerTrainerMetadata {
             val partySize =
                 collectionSize(
                     readMember(
+                        trainerTeam,
+                        "getTeam",
+                        "team"
+                    ) ?: readMember(
                         data,
                         "getTeam",
                         "team"
                     )
                 )
                     .coerceIn(0, MAX_PARTY_SIZE)
+
+            logger.debug(
+                "Resolved RCT trainer definition trainerId={} dataClass={} teamClass={} partySize={}",
+                trainerId,
+                data.javaClass.name,
+                trainerTeam.javaClass.name,
+                partySize
+            )
 
             TrainerMetadata(
                 trainerId = trainerId,
