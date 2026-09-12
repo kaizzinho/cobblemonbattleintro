@@ -198,7 +198,8 @@ object BattleIntroClientCoordinator {
             BattleIntroKind.RAID,
             BattleIntroKind.WILD_BOSS,
             BattleIntroKind.LEGENDARY,
-            BattleIntroKind.MYTHICAL ->
+            BattleIntroKind.MYTHICAL,
+            BattleIntroKind.ALPHA ->
                 startWild(
                     context,
                     kind
@@ -342,6 +343,13 @@ object BattleIntroClientCoordinator {
                     SpecialWildPokemonResolver.Role.MYTHICAL
                 )
 
+            BattleIntroKind.ALPHA ->
+                authoritativeSpecial(
+                    entity,
+                    descriptor,
+                    SpecialWildPokemonResolver.Role.ALPHA
+                )
+
             else ->
                 null
         }
@@ -428,7 +436,8 @@ object BattleIntroClientCoordinator {
                 SpecialWildPokemonResolver.fromAuthoritative(
                     entity = entity,
                     role = role,
-                    primaryTypeId = descriptor.detail
+                    primaryTypeId = descriptor.detail,
+                    authoritativeColorRgb = descriptor.colorRgb
                 )
         )
     }
@@ -447,6 +456,9 @@ object BattleIntroClientCoordinator {
 
             SpecialWildPokemonResolver.Role.MYTHICAL ->
                 BattleIntroductionConfig.mythicalBattleIntros
+
+            SpecialWildPokemonResolver.Role.ALPHA ->
+                BattleIntroductionConfig.alphaBattleIntros
         }
 
     private fun startIntro(

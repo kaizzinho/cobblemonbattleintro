@@ -25,7 +25,7 @@ object PokemonPortraitRenderer {
         )
 
 
-// once model render fails keep using the fallback
+// stick to fallback after a 3d render failure
     private val failed3dEntities =
         Collections.synchronizedSet(
             mutableSetOf<java.util.UUID>()
@@ -36,7 +36,7 @@ object PokemonPortraitRenderer {
             mutableSetOf<java.util.UUID>()
         )
 
-// keep profile state alive so cobblemon idle anims can move
+// keep profile state alive for cobblemon idle anims
     private val profileAnimationStates =
         Collections.synchronizedMap(
             mutableMapOf<java.util.UUID, ProfileAnimationState>()
@@ -47,7 +47,6 @@ object PokemonPortraitRenderer {
         var lastRenderNs: Long
     )
 
-// tries the picked portrait mode and fails soft
     fun render(
         ctx: DrawContext,
         entity: PokemonEntity,
@@ -212,7 +211,7 @@ object PokemonPortraitRenderer {
         )
     }
 
-// use cobblemon profile tuning for weird shaped mons
+// use cobblemon profile tuning for odd shapes
     private fun tryRenderNativeProfile(
         ctx: DrawContext,
         entity: PokemonEntity,
@@ -249,7 +248,7 @@ object PokemonPortraitRenderer {
                 slotRight.coerceAtMost(screenWidth)
 
             val slotWidth =
-                (clipRight - clipLeft)
+                (slotRight - slotLeft)
                     .coerceAtLeast(1)
 
             val slotHeight =
@@ -291,7 +290,7 @@ object PokemonPortraitRenderer {
             animation.lastRenderNs = nowNs
 
             val widget = ModelWidget(
-                clipLeft,
+                slotLeft,
                 slotTop,
                 slotWidth,
                 slotHeight,
@@ -339,7 +338,6 @@ object PokemonPortraitRenderer {
         }
     }
 
-// old entity path stays as the backup
     private fun tryRenderEntityFallback(
         ctx: DrawContext,
         entity: PokemonEntity,

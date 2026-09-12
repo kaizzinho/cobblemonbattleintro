@@ -3,7 +3,7 @@
   "key.battleintroduction.skip_intro": "Pular introdução da batalha",
   "modmenu.nameTranslation.cobblemonbattleintroduction": "Cobblemon Battle Introduction",
   "modmenu.summaryTranslation.cobblemonbattleintroduction": "Introduções VS no estilo Pokémon para batalhas do Cobblemon.",
-  "modmenu.descriptionTranslation.cobblemonbattleintroduction": "Introduções VS configuráveis para treinadores, PvP, WildBosses, Raid Dens, Pokémon Lendários e Pokémon Míticos.",
+  "modmenu.descriptionTranslation.cobblemonbattleintroduction": "Introduções VS configuráveis para treinadores, PvP, WildBosses, Raid Dens, Pokémon Lendários, Pokémon Míticos e Pokémon Alpha.",
   "battleintroduction.config.title": "Cobblemon Battle Introduction",
   "battleintroduction.config.tab.general": "Geral",
   "battleintroduction.config.tab.encounters": "Batalhas",
@@ -28,6 +28,7 @@
   "battleintroduction.config.raiddens_intros": "Cobblemon Raid Dens",
   "battleintroduction.config.legendary_intros": "Pokémon Lendários",
   "battleintroduction.config.mythical_intros": "Pokémon Míticos",
+  "battleintroduction.config.alpha_intros": "Pokémon Alpha",
   "battleintroduction.config.animation_speed": "Velocidade da Animação",
   "battleintroduction.config.flash_intensity": "Intensidade dos Flashes",
   "battleintroduction.config.hold_duration": "Duração da Tela VS",
@@ -64,5 +65,5 @@
   "battleintroduction.config.sprite_pack.missing": "Nenhum pacote 2D de Pokémon compatível detectado",
   "battleintroduction.config.sprite_pack.hint": "Esperado: assets/battleintroduction/textures/pokemon/{front,shiny}/<dex>.png",
   "battleintroduction.config.rct_overrides": "Overrides de função RCT: %s configurados",
-  "battleintroduction.config.rct_overrides_hint": "Overrides avançados de RCT continuam no config/battleintroduction.json."
+  "battleintroduction.config.rct_overrides_hint": "Overrides avançados de RCT continuam no config/cobblemonbattleintroduction/battleintroduction.json."
 }

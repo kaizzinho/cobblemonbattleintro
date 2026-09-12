@@ -5,7 +5,7 @@ import com.terraformersmc.modmenu.api.ConfigScreenFactory
 import com.terraformersmc.modmenu.api.ModMenuApi
 
 
-// loaded only when mod menu is around
+// only loaded when mod menu is present
 class BattleIntroductionModMenuIntegration : ModMenuApi {
 
     override fun getModConfigScreenFactory(): ConfigScreenFactory<*> =

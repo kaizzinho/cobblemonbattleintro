@@ -13,7 +13,7 @@ import java.util.Locale
 
 
 @Environment(EnvType.CLIENT)
-// keeps rct optional and reads trainer data through reflection
+// reflection keeps rct optional
 object RctTrainerMetadataResolver {
 
     private val LOGGER =

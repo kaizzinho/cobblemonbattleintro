@@ -7,6 +7,7 @@ import com.cobblemon.mod.common.api.battles.model.actor.EntityBackedBattleActor
 import com.cobblemon.mod.common.api.events.CobblemonEvents
 import com.cobblemon.mod.common.battles.actor.PlayerBattleActor
 import com.cobblemon.mod.common.entity.pokemon.PokemonEntity
+import com.cobblemon.mod.common.pokemon.Pokemon
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.fabricmc.loader.api.FabricLoader
 import net.minecraft.entity.LivingEntity
@@ -323,9 +324,8 @@ object BattleIntroServerBridge {
     ): ServerPresentation? {
         val pokemon = entity.pokemon
         val kind =
-            specialKind(
-                pokemon.species.labels
-            ) ?: return null
+            specialKind(pokemon)
+                ?: return null
 
         return ServerPresentation(
             kind = kind,
@@ -336,19 +336,28 @@ object BattleIntroServerBridge {
                 pokemon.primaryType
                     .showdownId
                     .lowercase(Locale.ROOT),
-            level = pokemon.level
+            level = pokemon.level,
+            colorRgb =
+                if (kind == BattleIntroKind.ALPHA) {
+                    BattleIntroColors.ALPHA_LAVA_RED
+                } else {
+                    0
+                }
         )
     }
 
     private fun specialKind(
-        labels: Set<String>
+        pokemon: Pokemon
     ): BattleIntroKind? =
         when {
-            labels.contains("mythical") ->
+            pokemon.isMythical() ->
                 BattleIntroKind.MYTHICAL
 
-            labels.contains("legendary") ->
+            pokemon.isLegendary() ->
                 BattleIntroKind.LEGENDARY
+
+            pokemon.isAlpha ->
+                BattleIntroKind.ALPHA
 
             else ->
                 null

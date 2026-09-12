@@ -47,6 +47,19 @@ dependencies {
     modImplementation("net.fabricmc:fabric-language-kotlin:${project.property("fabric_kotlin_version")}")
     modImplementation("com.cobblemon:fabric:${project.property("cobblemon_version")}")
 
+    // keep rct optional while loading local jars in dev
+    modCompileOnly(files("libs/rctapi-fabric-1.21.1-0.16.0-beta.jar"))
+    modCompileOnly(files("libs/rctmod-fabric-1.21.1-0.19.0-beta.jar"))
+    modCompileOnly(files("libs/architectury-13.0.11-fabric.jar"))
+    modCompileOnly(files("libs/ForgeConfigAPIPort-v21.1.6-1.21.1-Fabric.jar"))
+    modLocalRuntime(files("libs/rctapi-fabric-1.21.1-0.16.0-beta.jar"))
+    modLocalRuntime(files("libs/rctmod-fabric-1.21.1-0.19.0-beta.jar"))
+    modLocalRuntime(files("libs/architectury-13.0.11-fabric.jar"))
+    modLocalRuntime(files("libs/ForgeConfigAPIPort-v21.1.6-1.21.1-Fabric.jar"))
+
+    runtimeOnly("com.electronwill.night-config:core:3.8.0")
+    runtimeOnly("com.electronwill.night-config:toml:3.8.0")
+
     modImplementation("com.terraformersmc:modmenu:11.0.4")
 }
 

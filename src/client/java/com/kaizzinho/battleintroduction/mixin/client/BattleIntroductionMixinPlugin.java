@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Set;
 
 
-// only load addon mixins when the target mod exists
+// only load addon mixins when the addon exists
 public final class BattleIntroductionMixinPlugin implements IMixinConfigPlugin {
 
     private static final String BATTLE_EXTRAS_MOD_ID =

@@ -26,7 +26,6 @@ object TrainerPortraitRenderer {
     private val LOGGER = LoggerFactory.getLogger("battleintroduction/TrainerPortrait")
     private const val MAX_WIDGET_CACHE = 12
 
-// cache keeps the skin widgets cheap
     private data class WidgetKey(
         val texture: Identifier,
         val model: SkinTextures.Model,

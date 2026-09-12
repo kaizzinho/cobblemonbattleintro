@@ -44,7 +44,6 @@ object BattleIntroOverlay {
     private var isFlushing = false
 
 
-// keeps the whole intro pace in one spot
     private const val BASE_FLICKER_TOTAL_MS      = 2250L
     private const val BASE_BARS_SLIDE_MS         = 1250L
     private const val BASE_VS_APPEAR_MS          = 850L
@@ -1261,7 +1260,6 @@ object BattleIntroOverlay {
     }
 
 
-// dark backing keeps bright bars readable
     private fun drawInfoBannerText(
         ctx: DrawContext,
         text: String,

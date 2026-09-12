@@ -19,7 +19,6 @@ object PokemonSpriteRenderer {
     private val failedTextures =
         Collections.synchronizedSet(mutableSetOf<String>())
 
-// cache the crop so each sprite gets scanned once
     private val measuredFrames =
         Collections.synchronizedMap(
             mutableMapOf<String, SpriteFrame>()
@@ -78,15 +77,15 @@ object PokemonSpriteRenderer {
         val frame = loadFrame(sprite) ?: return false
 
         val availableWidth =
-            (clipRight - clipLeft - innerPadding * 2)
+            (slotRight - slotLeft - innerPadding * 2)
                 .coerceAtLeast(1)
 
         val availableHeight =
-            (clipBottom - clipTop - innerPadding * 2)
+            (slotBottom - slotTop - innerPadding * 2)
                 .coerceAtLeast(1)
 
 
-// fit visible pixels so wide sprites stay inside the slot
+// fit visible pixels so wide sprites stay in the slot
         val scale = min(
             availableWidth.toFloat() / frame.contentWidth.toFloat(),
             availableHeight.toFloat() / frame.contentHeight.toFloat()
@@ -104,8 +103,8 @@ object PokemonSpriteRenderer {
 
         val drawX = centerX - drawW / 2
         val drawY =
-            clipTop +
-                (clipBottom - clipTop - drawH) / 2
+            slotTop +
+                (slotBottom - slotTop - drawH) / 2
 
         return try {
             ctx.enableScissor(

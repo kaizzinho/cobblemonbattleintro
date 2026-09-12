@@ -3,6 +3,7 @@ package com.kaizzinho.battleintroduction.client
 import com.cobblemon.mod.common.api.battles.model.actor.ActorType
 import com.cobblemon.mod.common.api.battles.model.actor.BattleActor
 import com.cobblemon.mod.common.entity.pokemon.PokemonEntity
+import com.kaizzinho.battleintroduction.BattleIntroColors
 import com.kaizzinho.battleintroduction.client.config.BattleIntroductionConfig
 import net.minecraft.entity.LivingEntity
 import org.slf4j.LoggerFactory
@@ -16,7 +17,8 @@ object SpecialWildPokemonResolver {
 
     enum class Role(val displayName: String) {
         LEGENDARY("Legendary"),
-        MYTHICAL("Mythical")
+        MYTHICAL("Mythical"),
+        ALPHA("Alpha")
     }
 
     data class Presentation(
@@ -32,7 +34,7 @@ object SpecialWildPokemonResolver {
             get() = entity.pokemon.level
     }
 
-// uses cobblemon labels so custom packs can join in
+// use cobblemon helpers so datapack forms still work
     fun resolve(
         actor: BattleActor,
         entity: LivingEntity?
@@ -48,12 +50,11 @@ object SpecialWildPokemonResolver {
             entity as? PokemonEntity
                 ?: return null
         val pokemon = pokemonEntity.pokemon
-        val labels = pokemon.species.labels
-
 
         val role = when {
-            labels.contains("mythical") -> Role.MYTHICAL
-            labels.contains("legendary") -> Role.LEGENDARY
+            pokemon.isMythical() -> Role.MYTHICAL
+            pokemon.isLegendary() -> Role.LEGENDARY
+            pokemon.isAlpha -> Role.ALPHA
             else -> return null
         }
 
@@ -65,7 +66,7 @@ object SpecialWildPokemonResolver {
             entity = pokemonEntity,
             role = role,
             primaryTypeId = primaryTypeId,
-            baseColorRgb = colorForPrimaryType(primaryTypeId)
+            baseColorRgb = colorForRole(role, primaryTypeId)
         )
 
         if (BattleIntroductionConfig.debugLogging) {
@@ -90,7 +91,8 @@ object SpecialWildPokemonResolver {
     fun fromAuthoritative(
         entity: PokemonEntity,
         role: Role,
-        primaryTypeId: String
+        primaryTypeId: String,
+        authoritativeColorRgb: Int = 0
     ): Presentation {
         val normalized =
             primaryTypeId.lowercase(
@@ -102,11 +104,26 @@ object SpecialWildPokemonResolver {
             role = role,
             primaryTypeId = normalized,
             baseColorRgb =
-                colorForPrimaryType(
-                    normalized
-                )
+                if (role == Role.ALPHA) {
+                    BattleIntroColors.ALPHA_LAVA_RED
+                } else {
+                    authoritativeColorRgb
+                        .takeIf { it != 0 }
+                        ?.and(0xFFFFFF)
+                        ?: colorForPrimaryType(normalized)
+                }
         )
     }
+
+    private fun colorForRole(
+        role: Role,
+        primaryTypeId: String
+    ): Int =
+        if (role == Role.ALPHA) {
+            BattleIntroColors.ALPHA_LAVA_RED
+        } else {
+            colorForPrimaryType(primaryTypeId)
+        }
 
     fun colorForPrimaryType(typeId: String): Int = when (
         typeId.lowercase(Locale.ROOT)

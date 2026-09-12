@@ -10,7 +10,6 @@ object AutoRecallHandler {
     private val LOGGER =
         LoggerFactory.getLogger("battleintroduction/AutoRecallHandler")
 
-// only recall mons owned by battle players
     fun register() {
         CobblemonEvents.BATTLE_STARTED_PRE.subscribe { event ->
 
@@ -32,7 +31,7 @@ object AutoRecallHandler {
             }
 
 
-// mounted mons stay out of recall
+// never recall a mon carrying passengers
             if (entity.hasPassengers()) {
                 LOGGER.debug(
                     "Skipping auto-recall for mounted Pokémon {} (entityId={}, passengers={})",

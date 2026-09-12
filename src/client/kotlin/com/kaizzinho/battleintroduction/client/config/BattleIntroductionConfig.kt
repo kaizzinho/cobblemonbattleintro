@@ -22,7 +22,15 @@ object BattleIntroductionConfig {
         .disableHtmlEscaping()
         .create()
 
+    private val configDir: Path =
+        FabricLoader.getInstance()
+            .configDir
+            .resolve("cobblemonbattleintroduction")
+
     private val configPath: Path =
+        configDir.resolve("battleintroduction.json")
+
+    private val previousConfigPath: Path =
         FabricLoader.getInstance()
             .configDir
             .resolve("battleintroduction.json")
@@ -113,7 +121,6 @@ object BattleIntroductionConfig {
         }
     }
 
-// one config backs json and the menu
     data class Values(
 
 
@@ -130,6 +137,7 @@ object BattleIntroductionConfig {
         var raidDenBattleIntros: Boolean = true,
         var legendaryBattleIntros: Boolean = true,
         var mythicalBattleIntros: Boolean = true,
+        var alphaBattleIntros: Boolean = true,
 
 
         var animationSpeed: String = AnimationSpeed.NORMAL.configValue,
@@ -189,6 +197,9 @@ object BattleIntroductionConfig {
 
     val mythicalBattleIntros: Boolean
         get() = values.mythicalBattleIntros
+
+    val alphaBattleIntros: Boolean
+        get() = values.alphaBattleIntros
 
     val animationSpeed: AnimationSpeed
         get() = AnimationSpeed.from(values.animationSpeed)
@@ -271,22 +282,28 @@ object BattleIntroductionConfig {
     }
 
 
-// bad files get backed up before defaults take over
+// back up bad configs before resetting
     fun load() {
         try {
             Files.createDirectories(configPath.parent)
 
-            if (!Files.exists(configPath) && Files.exists(legacyConfigPath)) {
-                Files.copy(
-                    legacyConfigPath,
-                    configPath,
-                    StandardCopyOption.REPLACE_EXISTING
-                )
-                LOGGER.info(
-                    "Migrated Battle Introduction config from {} to {}",
-                    legacyConfigPath.toAbsolutePath(),
-                    configPath.toAbsolutePath()
-                )
+            if (!Files.exists(configPath)) {
+                val migrationSource =
+                    listOf(previousConfigPath, legacyConfigPath)
+                        .firstOrNull { Files.exists(it) }
+
+                if (migrationSource != null) {
+                    Files.copy(
+                        migrationSource,
+                        configPath,
+                        StandardCopyOption.REPLACE_EXISTING
+                    )
+                    LOGGER.info(
+                        "Migrated Battle Introduction config from {} to {}",
+                        migrationSource.toAbsolutePath(),
+                        configPath.toAbsolutePath()
+                    )
+                }
             }
 
             if (!Files.exists(configPath)) {
@@ -310,7 +327,7 @@ object BattleIntroductionConfig {
             writeConfig()
 
             LOGGER.info(
-                "Loaded BattleIntroduction config: intros={}, trainer={}, pvp={}, wildBoss={}, raidDens={}, legendary={}, mythical={}, speed={}, flash={}, particles={}, trainerPortrait={}, pokemonPortrait={}, debugLogging={}, rctTrainerRoleOverrides={}",
+                "Loaded BattleIntroduction config: intros={}, trainer={}, pvp={}, wildBoss={}, raidDens={}, legendary={}, mythical={}, alpha={}, speed={}, flash={}, particles={}, trainerPortrait={}, pokemonPortrait={}, debugLogging={}, rctTrainerRoleOverrides={}",
                 values.enableBattleIntros,
                 values.trainerBattleIntros,
                 values.pvpBattleIntros,
@@ -318,6 +335,7 @@ object BattleIntroductionConfig {
                 values.raidDenBattleIntros,
                 values.legendaryBattleIntros,
                 values.mythicalBattleIntros,
+                values.alphaBattleIntros,
                 values.animationSpeed,
                 values.flashIntensity,
                 values.particleDensity,

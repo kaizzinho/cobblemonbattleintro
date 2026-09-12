@@ -8,14 +8,8 @@ import java.lang.reflect.Field
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
 
-/**
- * Small reflection-only bridge for RCT trainer definitions.
- *
- * RCT does not expose a capture-ball field in trainer datapacks, so Battle
- * Introduction only needs the configured team size here. The caller can then
- * use ordinary Poké Balls as a visual fallback until Cobblemon's battle actor
- * exposes the instantiated trainer Pokémon.
- */
+// reflection keeps rct optional
+// trainer data has no caught ball, so known slots fall back to normal poke balls
 object RctServerTrainerMetadata {
 
     data class TrainerMetadata(
@@ -56,8 +50,7 @@ object RctServerTrainerMetadata {
                 resolveTrainerData(entity, trainerId)
                     ?: return null
 
-            // RCT 0.17.x stores the battle team inside TrainerMobData#getTrainerTeam().
-            // Keep the direct-data fallback for older/alternate RCT layouts.
+            // 0.19 keeps the team nested; direct data is the old fallback
             val trainerTeam =
                 readMember(
                     data,

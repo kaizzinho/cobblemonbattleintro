@@ -3,13 +3,13 @@
   "id": "cobblemonbattleintroduction",
   "version": "${version}",
   "name": "Cobblemon Battle Introduction",
-  "description": "Adds Pok\u00e9mon-style VS battle introductions to Cobblemon with animated 3D portraits, optional 2D sprites, trainer battles, PvP, WildBoss, Raid Dens, Legendary and Mythical encounters, and extensive customization.",
+  "description": "Adds Pokémon-style VS battle introductions to Cobblemon with animated 3D portraits, optional 2D sprites, trainer battles, PvP, WildBoss, Raid Dens, Legendary, Mythical and Alpha encounters, and extensive customization.",
   "authors": [
     "kaizzinho"
   ],
   "contact": {
-    "sources": "https://github.com/arthurc0sme/kaizzinhobattleslider",
-    "issues": "https://github.com/arthurc0sme/kaizzinhobattleslider/issues"
+    "sources": "https://github.com/arthurc0sme/cobblemonbattleintro",
+    "issues": "https://github.com/arthurc0sme/cobblemonbattleintro/issues"
   },
   "license": "Battle Introduction Source-Available Permission License 1.0",
   "icon": "assets/battleintroduction/icon.png",
@@ -35,16 +35,17 @@
     }
   ],
   "depends": {
-    "fabricloader": ">=0.16.0",
+    "fabricloader": ">=0.17.2",
     "fabric-api": "*",
     "fabric-language-kotlin": "*",
-    "cobblemon": ">=1.7.3 <1.8.0",
+    "cobblemon": ">=1.8.0 <1.9.0",
     "minecraft": "~1.21.1"
   },
   "suggests": {
     "modmenu": ">=11.0.0",
     "wildbosses": "*",
-    "rctmod": "*",
+    "rctmod": ">=0.19.0-beta",
+    "rctapi": ">=0.16.0-beta",
     "cobblemonraiddens": "*"
   },
   "provides": [

@@ -16,7 +16,6 @@ object TrainerSkinRenderer {
     enum class Pose { PLAYER, OPPONENT }
 
 
-// flat skin fallback keeps the pose stable
     fun render(
         drawContext: DrawContext,
         skinId: Identifier?,

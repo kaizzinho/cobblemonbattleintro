@@ -13,7 +13,13 @@ enum class BattleIntroKind {
     WILD_BOSS,
     RAID,
     LEGENDARY,
-    MYTHICAL
+    MYTHICAL,
+    ALPHA
+}
+
+object BattleIntroColors {
+    // alpha intros always use the red eye-glare palette
+    const val ALPHA_LAVA_RED: Int = 0xCF1020
 }
 
 data class BattleIntroStartPayload(

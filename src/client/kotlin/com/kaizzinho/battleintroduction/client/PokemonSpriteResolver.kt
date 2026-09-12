@@ -61,7 +61,7 @@ object PokemonSpriteResolver {
     }
 
 
-// checks live resources so any matching pack can work
+// scan live resources so compatible packs just work
     fun inspectResourcePackAvailability(): ResourcePackAvailability {
         val resourceManager =
             MinecraftClient.getInstance().resourceManager

@@ -2,9 +2,9 @@
 
 ![Status](https://img.shields.io/badge/status-release%20candidate-yellow)
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-62B47A?logo=minecraft&logoColor=white)
-![Fabric](https://img.shields.io/badge/Fabric-0.16%2B-DBB69B?logo=minecraft&logoColor=white)
+![Fabric](https://img.shields.io/badge/Fabric-0.17.2%2B-DBB69B?logo=minecraft&logoColor=white)
 ![Kotlin](https://img.shields.io/badge/Kotlin-Fabric%20Language%20Kotlin-7F52FF?logo=kotlin&logoColor=white)
-![Cobblemon](https://img.shields.io/badge/Cobblemon-1.7.3-3E8E41)
+![Cobblemon](https://img.shields.io/badge/Cobblemon-1.8.0-3E8E41)
 ![License](https://img.shields.io/badge/license-Source%20Available%20%7C%20Permission%20Required-orange)
 
 *Read this in [English](#english) | Leia em [Português](#português)*
@@ -26,7 +26,8 @@ The current version supports:
 - WildBosses Boss encounters;
 - Cobblemon Raid Dens battles;
 - wild Legendary Pokémon;
-- wild Mythical Pokémon.
+- wild Mythical Pokémon;
+- Alpha Pokémon.
 
 Ordinary wild Pokémon remain untouched.
 
@@ -57,10 +58,12 @@ WildBosses Boss
     ↓
 Legendary or Mythical
     ↓
+Alpha Pokémon
+    ↓
 ordinary wild battle
 ```
 
-A raid encounter always uses the **Raid Dens presentation**. Outside raids, a Pokémon that is both Legendary/Mythical and an actual WildBosses Boss uses the **Boss presentation**.
+A raid encounter always uses the **Raid Dens presentation**. Outside raids, a Pokémon that is both Legendary/Mythical and an actual WildBosses Boss uses the **Boss presentation**. Legendary/Mythical classification stays above Alpha, so an Alpha Legendary or Mythical keeps the Legendary/Mythical presentation rather than being downgraded to the generic Alpha presentation.
 
 This is important for modpacks that change the WildBosses species blacklist.
 
@@ -72,12 +75,13 @@ This is important for modpacks that change the WildBosses species blacklist.
 - [x] **WildBosses Boss battles** with tier colors, Boss species name, authoritative scaled level, and a real Pokémon portrait.
 - [x] **Cobblemon Raid Dens battles** with native raid-type colors, star rating, level, real Pokémon portrait, and per-client presentation.
 - [x] **Legendary and Mythical wild battles** detected from Cobblemon species labels.
-- [x] **Primary-type colors** for Legendary/Mythical encounters.
+- [x] **Alpha Pokémon battles** detected from Cobblemon 1.8's synchronized `Pokemon.isAlpha` state.
+- [x] **Primary-type colors** for Legendary/Mythical encounters and a fixed **Lava Red `#CF1020`** palette for Alpha encounters.
 - [x] **Controlled 3D trainer portraits** using upper-body player models instead of live world animation.
 - [x] **Real WIDE/Steve and SLIM/Alex skin models** are preserved.
 - [x] **Mirrored inward-facing trainer poses** so both sides use matching crop, camera, pitch, and opposing presentation yaw.
 - [x] **2D trainer-skin fallback** when a compatible 3D player-like portrait cannot be prepared.
-- [x] **Real 3D Pokémon portraits** for WildBosses and Legendary/Mythical encounters.
+- [x] **Real 3D Pokémon portraits** for WildBosses, Legendary/Mythical, and Alpha encounters.
 - [x] **Automatic Pokémon 3D fitting** based on entity width and height, with scissor clipping.
 - [x] **Optional external 2D Pokémon sprite fallback** through Minecraft resource packs.
 - [x] **Shiny-aware sprite lookup**.
@@ -143,6 +147,10 @@ The global **Animation Speed** setting scales the visual stages while the hold d
 
 ![Trainer battle](docs/images/trainer_battle.png)
 
+#### Alpha Pokémons
+
+![Alpha Battle](docs/images/alpha.png)
+
 #### WildBosses
 
 ![WildBoss encounter](docs/images/wildbosses.png)
@@ -169,22 +177,32 @@ The global **Animation Speed** setting scales the visual stages while the hold d
 #### Required
 
 - Minecraft `1.21.1`
-- Fabric Loader `0.16.0+`
+- Fabric Loader `0.17.2+`
 - Fabric API
 - Fabric Language Kotlin
-- Cobblemon `1.7.3`
+- Cobblemon `1.8.0`
 - Java `21`
 
 #### Optional integrations
 
 - **Mod Menu `11.0.0+`** — adds the in-game configuration screen.
-- **Radical Cobblemon Trainers** — adds trainer entity metadata, skins, names, trainer roles, and type colors.
+- **Radical Cobblemon Trainers `0.19.0-beta+` + RCT API `0.16.0-beta+`** — adds trainer entity metadata, skins, names, trainer roles, party occupancy, and type colors. This is the Cobblemon 1.8-compatible RCT stack used by the development build.
 - **WildBosses** — enables the dedicated Boss encounter presentation.
 - **Cobblemon Raid Dens** — enables the dedicated raid presentation. Raid intros are local to each modded client, so unmodded players can participate in the same raid normally.
 - **Cobblemon Battle Extras** — Battle Introduction conditionally suppresses its battle UI elements during the intro when detected.
 - **Compatible Pokémon sprite resource pack** — enables external 2D Pokémon portraits and fallback rendering.
 
 None of these are required for the base trainer/PvP presentation.
+
+### Cobblemon 1.8 compatibility
+
+This source targets **Cobblemon 1.8.x on Minecraft 1.21.1**. The battle event, actor, party-storage, caught-ball, Pokémon entity spawn-direction, and core battle packet surfaces used by Battle Introduction were audited for the 1.8 port.
+
+Cobblemon 1.8 Alpha Pokémon receive a dedicated Alpha introduction. Detection uses Cobblemon's synchronized `Pokemon.isAlpha` state, so it works in the authoritative server path and in the client-only fallback without species lists or heuristics. Alpha encounters use a fixed **Lava Red `#CF1020`** opponent palette, matching their red eye glare, show `Alpha <Species>`, show the real current level, and use the normal Pokémon portrait path.
+
+Alpha is intentionally below Raid Dens, WildBosses, and Legendary/Mythical in encounter priority.
+
+Cobblemon 1.8 also adds intrinsic Pokémon size variation and Alpha/baby scaling. The 3D portrait path continues to use the real Pokémon/entity data, but very small, very large, intrinsically scaled, and Alpha-sized Pokémon should be included in release regression testing.
 
 ### Recommended immersion setup
 
@@ -207,6 +225,8 @@ Cobblemon Raid Dens
 WildBosses Boss
     ↓
 Legendary or Mythical
+    ↓
+Alpha Pokémon
     ↓
 ordinary wild battle
 ```
@@ -362,6 +382,34 @@ Mythical Mew
 The info row shows the Pokémon's real current level.
 
 The opponent party-ball row is omitted for these wild encounters.
+
+### Alpha Pokémon encounters
+
+Cobblemon 1.8 Alpha Pokémon receive the same special-wild cinematic structure while remaining a distinct encounter role.
+
+Detection reads the synchronized `Pokemon.isAlpha` property directly. No species list, aspect-name guess, eye-particle detection, or size heuristic is used.
+
+The opponent label is:
+
+```text
+Alpha Garchomp
+```
+
+The info row shows the Alpha's real current level and the opponent party-ball row is omitted. Alpha always uses **Lava Red `#CF1020`** as its base opponent color, regardless of the Pokémon's type.
+
+Priority remains:
+
+```text
+Raid Dens
+    ↓
+WildBosses
+    ↓
+Legendary / Mythical
+    ↓
+Alpha
+    ↓
+ordinary wild
+```
 
 #### Primary-type palette
 
@@ -522,7 +570,7 @@ Empty slots use Battle Introduction's inactive ball texture.
 
 The row enters with a staggered animation and a synchronized lineup sound.
 
-WildBosses and Legendary/Mythical opponent sides replace the opponent party row with battle information.
+WildBosses, Legendary/Mythical, and Alpha opponent sides replace the opponent party row with battle information.
 
 ### Auto recall
 
@@ -565,7 +613,7 @@ Mod Menu is a **soft dependency**.
 
 When installed, Battle Introduction exposes a centered vanilla-style configuration screen through Mod Menu.
 
-When Mod Menu is absent, Battle Introduction still loads normally and `config/battleintroduction.json` remains available.
+When Mod Menu is absent, Battle Introduction still loads normally and `config/cobblemonbattleintroduction/battleintroduction.json` remains available.
 
 The menu is split into:
 
@@ -588,7 +636,7 @@ Advanced
 | Show Name Badges | On |
 | Show Party Balls | On |
 
-`Allow Intro Skip` applies to trainer, WildBosses, Raid Dens, Legendary, and Mythical introductions. PvP introductions are always skippable regardless of this setting.
+`Allow Intro Skip` applies to trainer, WildBosses, Raid Dens, Legendary, Mythical, and Alpha introductions. PvP introductions are always skippable regardless of this setting.
 
 #### Battles
 
@@ -600,6 +648,7 @@ Advanced
 | Cobblemon Raid Dens | On |
 | Legendary Pokémon | On |
 | Mythical Pokémon | On |
+| Alpha Pokémon | On |
 
 #### Visuals
 
@@ -663,7 +712,7 @@ Resetting presentation defaults intentionally preserves the advanced RCT role ov
 The same config backs both Mod Menu and manual JSON configuration:
 
 ```text
-config/battleintroduction.json
+config/cobblemonbattleintroduction/battleintroduction.json
 ```
 
 Current default values:
@@ -681,6 +730,7 @@ Current default values:
   "raidDenBattleIntros": true,
   "legendaryBattleIntros": true,
   "mythicalBattleIntros": true,
+  "alphaBattleIntros": true,
   "animationSpeed": "normal",
   "flashIntensity": "normal",
   "holdDurationMs": 1300,
@@ -787,7 +837,7 @@ See [LICENSE](LICENSE) for the complete terms.
 1. Install Fabric Loader for Minecraft `1.21.1`.
 2. Install Fabric API.
 3. Install Fabric Language Kotlin.
-4. Install Cobblemon `1.7.3`.
+4. Install Cobblemon `1.8.0`.
 5. Place the Battle Introduction `.jar` in `mods`.
 6. Launch the game.
 
@@ -808,8 +858,10 @@ Current target:
 | Component | Version |
 |---|---|
 | Minecraft | `1.21.1` |
-| Fabric Loader | `0.16.0+` |
-| Cobblemon | `1.7.3` |
+| Fabric Loader | `0.17.2+` |
+| Cobblemon | `1.8.0` |
+| RCT (optional) | `0.19.0-beta` |
+| RCT API (optional) | `0.16.0-beta` |
 | Java | `21` |
 | Mod Menu | optional `11.0.0+` |
 
@@ -849,7 +901,7 @@ For release validation, test the built JAR in a clean instance and then in the i
 
 ### Known Limitations
 
-- The current release target is Minecraft `1.21.1` with Cobblemon `1.7.3`.
+- The current release target is Minecraft `1.21.1` with Cobblemon `1.8.0`.
 - Compatibility with future Cobblemon/RCT/WildBosses internals may require updates.
 - Custom trainer models that are not player-like may use the 2D trainer fallback or no portrait depending on the selected mode.
 - Alternate Pokémon forms currently use the real form in 3D, but the generic 2D fallback resolves by base National Dex number.
@@ -901,7 +953,8 @@ A versão atual suporta:
 - encontros Boss do WildBosses;
 - batalhas do Cobblemon Raid Dens;
 - Pokémon Lendários selvagens;
-- Pokémon Míticos selvagens.
+- Pokémon Míticos selvagens;
+- Pokémon Alpha.
 
 Pokémon selvagens comuns continuam sem o slider.
 
@@ -932,10 +985,12 @@ Boss do WildBosses
     ↓
 Lendário ou Mítico
     ↓
+Pokémon Alpha
+    ↓
 batalha selvagem comum
 ```
 
-Uma raid sempre usa a **apresentação de Raid Dens**. Fora de raids, um Pokémon que seja Lendário/Mítico e também um Boss real do WildBosses usa a **apresentação de Boss**.
+Uma raid sempre usa a **apresentação de Raid Dens**. Fora de raids, um Pokémon que seja Lendário/Mítico e também um Boss real do WildBosses usa a **apresentação de Boss**. A classificação Lendário/Mítico fica acima de Alpha, então um Alpha que também seja Lendário ou Mítico mantém a apresentação Lendária/Mítica em vez de cair para a apresentação Alpha genérica.
 
 Isso é importante em modpacks que alteram a blacklist de espécies do WildBosses.
 
@@ -947,12 +1002,13 @@ Isso é importante em modpacks que alteram a blacklist de espécies do WildBosse
 - [x] **Bosses do WildBosses** com cores por tier, espécie, nível escalado e retrato real do Pokémon.
 - [x] **Batalhas do Cobblemon Raid Dens** com cor nativa do tipo da raid, estrelas, nível, retrato real do Pokémon e apresentação individual por cliente.
 - [x] **Lendários e Míticos selvagens** detectados pelos labels de species do Cobblemon.
-- [x] **Cores pelo tipo primário** em encontros Lendários/Míticos.
+- [x] **Batalhas contra Pokémon Alpha** detectadas pelo estado sincronizado `Pokemon.isAlpha` do Cobblemon 1.8.
+- [x] **Cores pelo tipo primário** em encontros Lendários/Míticos e paleta fixa **Lava Red `#CF1020`** para encontros Alpha.
 - [x] **Retratos 3D controlados de treinadores** usando o tronco do modelo em vez da animação ao vivo da entidade.
 - [x] **Modelos reais WIDE/Steve e SLIM/Alex** preservados.
 - [x] **Poses espelhadas olhando para dentro** com crop, câmera, pitch e yaw de apresentação correspondentes.
 - [x] **Fallback 2D de skin** quando um retrato 3D player-like não pode ser preparado.
-- [x] **Retratos 3D reais de Pokémon** para WildBosses e Lendários/Míticos.
+- [x] **Retratos 3D reais de Pokémon** para WildBosses, Lendários/Míticos e Alpha.
 - [x] **Ajuste automático de escala 3D** usando largura e altura da entidade.
 - [x] **Fallback opcional para sprites 2D externos** via resource pack do Minecraft.
 - [x] **Busca de sprite considerando shiny**.
@@ -1018,6 +1074,10 @@ A opção **Velocidade da animação** escala os estágios visuais enquanto o te
 
 ![Trainer battle](docs/images/trainer_battle.png)
 
+#### Pokémons Alpha
+
+![Alpha Battle](docs/images/alpha.png)
+
 #### Integração com WildBosses
 
 ![WildBoss encounter](docs/images/wildbosses.png)
@@ -1043,22 +1103,32 @@ A opção **Velocidade da animação** escala os estágios visuais enquanto o te
 #### Obrigatórios
 
 - Minecraft `1.21.1`
-- Fabric Loader `0.16.0+`
+- Fabric Loader `0.17.2+`
 - Fabric API
 - Fabric Language Kotlin
-- Cobblemon `1.7.3`
+- Cobblemon `1.8.0`
 - Java `21`
 
 #### Integrações opcionais
 
 - **Mod Menu `11.0.0+`** — adiciona a tela de configuração dentro do jogo.
-- **Radical Cobblemon Trainers** — fornece metadados, skins, nomes, roles e cores dos treinadores.
+- **Radical Cobblemon Trainers `0.19.0-beta+` + RCT API `0.16.0-beta+`** — fornece metadados, skins, nomes, roles, ocupação da party e cores dos treinadores. Este é o stack do RCT compatível com Cobblemon 1.8 usado no build de desenvolvimento.
 - **WildBosses** — ativa a apresentação dedicada de Boss.
 - **Cobblemon Raid Dens** — ativa a apresentação dedicada de raid. As intros são locais para cada cliente com o mod, então jogadores sem Battle Introduction podem participar da mesma raid normalmente.
 - **Cobblemon Battle Extras** — o Battle Introduction esconde condicionalmente seus elementos durante a intro quando o mod é detectado.
 - **Resource pack compatível de sprites de Pokémon** — habilita retratos 2D externos e fallback.
 
 Nenhuma dessas integrações é necessária para a apresentação base de treinador/PvP.
+
+### Compatibilidade com Cobblemon 1.8
+
+Este código-fonte tem como target **Cobblemon 1.8.x no Minecraft 1.21.1**. Os eventos de batalha, actors, storage da party, Poké Bola de captura, direção de spawn das entidades Pokémon e os principais caminhos de pacotes de batalha usados pelo Battle Introduction foram auditados para o port 1.8.
+
+Pokémon Alpha do Cobblemon 1.8 recebem uma introdução Alpha dedicada. A detecção usa o estado sincronizado `Pokemon.isAlpha` do Cobblemon, portanto funciona tanto no caminho autoritativo do servidor quanto no fallback client-only sem listas de espécies ou heurísticas. Encontros Alpha usam uma paleta fixa **Lava Red `#CF1020`**, combinando com o brilho vermelho dos olhos, mostram `Alpha <Espécie>`, exibem o nível real atual e reutilizam o caminho normal de retrato Pokémon.
+
+Alpha fica intencionalmente abaixo de Raid Dens, WildBosses e Lendário/Mítico na prioridade de encontros.
+
+O Cobblemon 1.8 também adiciona variação intrínseca de tamanho e escala de Alpha/baby Pokémon. O caminho de retrato 3D continua usando os dados reais do Pokémon/entidade, mas Pokémon muito pequenos, muito grandes, com escala intrínseca e Alphas devem fazer parte dos testes de regressão da release.
 
 ### Configuração recomendada para maior imersão
 
@@ -1081,6 +1151,8 @@ Cobblemon Raid Dens
 Boss do WildBosses
     ↓
 Lendário ou Mítico
+    ↓
+Pokémon Alpha
     ↓
 batalha selvagem comum
 ```
@@ -1237,6 +1309,34 @@ A linha de informação mostra o nível atual real do Pokémon.
 
 A linha de Poké Bolas do oponente não aparece nesses encontros selvagens.
 
+### Encontros com Pokémon Alpha
+
+Pokémon Alpha do Cobblemon 1.8 usam a mesma estrutura cinematográfica de encontros selvagens especiais, mas continuam sendo uma role própria.
+
+A detecção lê diretamente a propriedade sincronizada `Pokemon.isAlpha`. Não há lista de espécies, heurística por aspect, detecção de partículas dos olhos ou inferência por tamanho.
+
+O lado do oponente mostra:
+
+```text
+Alpha Garchomp
+```
+
+A linha de informação mostra o nível real atual do Alpha e a linha de Poké Bolas do oponente é omitida. Alpha sempre usa **Lava Red `#CF1020`** como cor base do oponente, independentemente do tipo do Pokémon.
+
+A prioridade continua:
+
+```text
+Raid Dens
+    ↓
+WildBosses
+    ↓
+Lendário / Mítico
+    ↓
+Alpha
+    ↓
+selvagem comum
+```
+
 #### Paleta pelo tipo primário
 
 A barra especial usa o tipo primário atual do Pokémon:
@@ -1392,7 +1492,7 @@ Slots vazios usam a textura inativa do Battle Introduction.
 
 A linha entra com animação staggered e som sincronizado.
 
-Bosses e Lendários/Míticos substituem a linha do oponente por informações do encontro.
+Bosses, Lendários/Míticos e Alpha substituem a linha do oponente por informações do encontro.
 
 ### Auto recall
 
@@ -1435,7 +1535,7 @@ Mod Menu é uma **soft dependency**.
 
 Quando instalado, o Battle Introduction disponibiliza uma tela centralizada usando widgets vanilla.
 
-Sem Mod Menu, o Battle Introduction continua funcionando normalmente e `config/battleintroduction.json` permanece disponível.
+Sem Mod Menu, o Battle Introduction continua funcionando normalmente e `config/cobblemonbattleintroduction/battleintroduction.json` permanece disponível.
 
 A tela é dividida em:
 
@@ -1458,7 +1558,7 @@ Advanced
 | Show Name Badges | On |
 | Show Party Balls | On |
 
-`Allow Intro Skip` controla as introduções de treinador, WildBosses, Raid Dens, Lendários e Míticos. Introduções PvP são sempre puláveis independentemente dessa opção.
+`Allow Intro Skip` controla as introduções de treinador, WildBosses, Raid Dens, Lendários, Míticos e Alpha. Introduções PvP são sempre puláveis independentemente dessa opção.
 
 #### Battles
 
@@ -1470,6 +1570,7 @@ Advanced
 | Cobblemon Raid Dens | On |
 | Legendary Pokémon | On |
 | Mythical Pokémon | On |
+| Alpha Pokémon | On |
 
 #### Visuals
 
@@ -1527,7 +1628,7 @@ O reset de apresentação preserva de propósito o mapa avançado de overrides d
 O Mod Menu e a configuração manual usam o mesmo arquivo:
 
 ```text
-config/battleintroduction.json
+config/cobblemonbattleintroduction/battleintroduction.json
 ```
 
 Valores padrão atuais:
@@ -1545,6 +1646,7 @@ Valores padrão atuais:
   "raidDenBattleIntros": true,
   "legendaryBattleIntros": true,
   "mythicalBattleIntros": true,
+  "alphaBattleIntros": true,
   "animationSpeed": "normal",
   "flashIntensity": "normal",
   "holdDurationMs": 1300,
@@ -1649,7 +1751,7 @@ Consulte [LICENSE](LICENSE) para os termos completos.
 1. Instale Fabric Loader para Minecraft `1.21.1`.
 2. Instale Fabric API.
 3. Instale Fabric Language Kotlin.
-4. Instale Cobblemon `1.7.3`.
+4. Instale Cobblemon `1.8.0`.
 5. Coloque o `.jar` do Battle Introduction em `mods`.
 6. Inicie o jogo.
 
@@ -1670,8 +1772,10 @@ Target atual:
 | Componente | Versão |
 |---|---|
 | Minecraft | `1.21.1` |
-| Fabric Loader | `0.16.0+` |
-| Cobblemon | `1.7.3` |
+| Fabric Loader | `0.17.2+` |
+| Cobblemon | `1.8.0` |
+| RCT (opcional) | `0.19.0-beta` |
+| RCT API (opcional) | `0.16.0-beta` |
 | Java | `21` |
 | Mod Menu | opcional `11.0.0+` |
 
@@ -1711,7 +1815,7 @@ Para validar uma release, teste o JAR em uma instância limpa e depois no modpac
 
 ### Limitações conhecidas
 
-- O target atual é Minecraft `1.21.1` com Cobblemon `1.7.3`.
+- O target atual é Minecraft `1.21.1` com Cobblemon `1.8.0`.
 - Atualizações futuras do Cobblemon, RCT ou WildBosses podem exigir ajustes.
 - Modelos customizados de NPC que não sejam player-like podem usar fallback 2D ou nenhum retrato conforme a opção escolhida.
 - Formas alternativas usam a forma real no 3D, mas o fallback 2D genérico resolve pela espécie base do National Dex.

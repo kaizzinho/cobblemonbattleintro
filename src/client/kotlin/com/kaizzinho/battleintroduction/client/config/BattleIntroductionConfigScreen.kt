@@ -8,7 +8,6 @@ import net.minecraft.client.gui.widget.CyclingButtonWidget
 import net.minecraft.text.Text
 
 
-// vanilla ui keeps mod menu optional
 class BattleIntroductionConfigScreen(
     private val parent: Screen?
 ) : Screen(Text.translatable("battleintroduction.config.title")) {
@@ -160,10 +159,16 @@ class BattleIntroductionConfigScreen(
         ) { working.legendaryBattleIntros = it }
 
         addBooleanOption(
-            row,
+            row++,
             "battleintroduction.config.mythical_intros",
             working.mythicalBattleIntros
         ) { working.mythicalBattleIntros = it }
+
+        addBooleanOption(
+            row,
+            "battleintroduction.config.alpha_intros",
+            working.alphaBattleIntros
+        ) { working.alphaBattleIntros = it }
     }
 
     private fun addVisualsPage() {
@@ -526,11 +531,11 @@ class BattleIntroductionConfigScreen(
         mouseY: Int,
         delta: Float
     ) {
-// no blur so old screens never bleed through
+// keep old screens from bleeding through
     }
 
     override fun applyBlur(delta: Float) {
-// blur stays off for this screen
+// keep vanilla blur off here
     }
 
     private fun renderSpritePackStatus(context: DrawContext) {
