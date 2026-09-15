@@ -11,7 +11,7 @@
     "sources": "https://github.com/arthurc0sme/cobblemonbattleintro",
     "issues": "https://github.com/arthurc0sme/cobblemonbattleintro/issues"
   },
-  "license": "Battle Introduction Source-Available Permission License 1.0",
+  "license": "ARR",
   "icon": "assets/battleintroduction/icon.png",
   "environment": "*",
   "entrypoints": {

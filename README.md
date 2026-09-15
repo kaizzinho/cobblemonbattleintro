@@ -5,7 +5,7 @@
 ![Fabric](https://img.shields.io/badge/Fabric-0.17.2%2B-DBB69B?logo=minecraft&logoColor=white)
 ![Kotlin](https://img.shields.io/badge/Kotlin-Fabric%20Language%20Kotlin-7F52FF?logo=kotlin&logoColor=white)
 ![Cobblemon](https://img.shields.io/badge/Cobblemon-1.8.0-3E8E41)
-![License](https://img.shields.io/badge/license-Source%20Available%20%7C%20Permission%20Required-orange)
+![License](https://img.shields.io/badge/license-All%20Rights%20Reserved-red)
 
 *Read this in [English](#english) | Leia em [Português](#português)*
 
@@ -146,10 +146,6 @@ The global **Animation Speed** setting scales the visual stages while the hold d
 #### Trainer battles
 
 ![Trainer battle](docs/images/trainer_battle.png)
-
-#### Alpha Pokémons
-
-![Alpha Battle](docs/images/alpha.png)
 
 #### WildBosses
 
@@ -791,44 +787,15 @@ rival
 
 These overrides are primarily intended for unusual or inconsistent trainer datapacks.
 
-### Source availability and usage permission
+### License and usage
 
-The Battle Introduction source code is publicly available for transparency, review, learning, issue diagnosis, private development, and contributions.
+Cobblemon Battle Introduction is **All Rights Reserved (ARR)**.
 
-Public access to the source code does **not** grant automatic permission to publicly redistribute, publish, deploy, or operate Battle Introduction.
+The original, unmodified mod may be used on public or private Minecraft servers and may be included and redistributed as part of public or private modpacks. Server owners and modpack authors do not need separate permission for those uses.
 
-#### Permission required
+Standalone reuploads or mirrors are not allowed. Copying, reusing, adapting, or incorporating the project's source code, assets, textures, artwork, or other content into another project is not allowed without prior written permission. Public distribution of modified versions, forks, derivative works, or altered binaries also requires prior written permission.
 
-**Prior written permission is required for every public modpack and every public multiplayer server using Battle Introduction.**
-
-Prior written permission from **Kaizzinho** is also required for:
-
-- inclusion in a public launcher, public client pack, public server pack, or other publicly distributed bundle;
-- redistribution or mirroring of the official JAR outside an authorized distribution;
-- public distribution of a build compiled from the source;
-- public distribution or deployment of modified, forked, or derivative versions;
-- commercial, monetized, sponsored, or paid public distribution or deployment.
-
-Permission is granted per project. Approval for one modpack, server, fork, launcher, or distribution does not automatically authorize another.
-
-#### Allowed without separate permission
-
-You may:
-
-- view and study the public source code;
-- clone or fork the repository for inspection, learning, private development, testing, or contribution where the hosting platform allows it;
-- privately modify and compile the source for personal development or testing;
-- open issues and submit pull requests;
-- use the official unmodified release in your own personal singleplayer installation;
-- use Battle Introduction in a genuinely private, nonpublic modpack or private multiplayer server for a closed group, as long as it is not publicly advertised, publicly distributed, sold, or monetized.
-
-A public fork or visible copy of the repository does not by itself grant permission to distribute builds or publicly deploy the mod.
-
-If a private modpack or private server later becomes public, permission must be obtained **before** that public use begins.
-
-See [LICENSE](LICENSE) for the complete terms.
-
-> **Note:** because public deployment and public redistribution require authorization, Battle Introduction is source-available rather than OSI-approved open-source software.
+Copyright notices, attribution, and the license text must remain intact. All rights not expressly granted are reserved. See [LICENSE](LICENSE) for the complete terms.
 
 ### Installation
 
@@ -922,15 +889,9 @@ For release validation, test the built JAR in a clean instance and then in the i
 
 ### License and usage terms
 
-Battle Introduction is distributed under the **Battle Introduction Source-Available Permission License 1.0**.
+Cobblemon Battle Introduction is **All Rights Reserved (ARR)**. The original, unmodified mod may be used on public or private servers and redistributed as part of public or private modpacks without separate permission.
 
-The source code is publicly visible for learning, review, private development, and contributions.
-
-**Prior written permission is required for every public modpack and every public multiplayer server using Battle Introduction.**
-
-Public redistribution, public compiled builds, public modified or derivative versions, mirrors, launcher bundles, and commercial public use also require prior written permission from **Kaizzinho**.
-
-Personal singleplayer use and genuinely private, nonpublic modpacks or servers are allowed under the conditions described in the license.
+Standalone reuploads or mirrors are not allowed. Reuse of source code or project assets, and public distribution of modified versions, forks, derivative works, or altered binaries, requires prior written permission from **Kaizzinho**. Copyright notices, attribution, and the license text must remain intact.
 
 See [LICENSE](LICENSE) for the complete terms.
 
@@ -1073,10 +1034,6 @@ A opção **Velocidade da animação** escala os estágios visuais enquanto o te
 #### Batalha contra treinadores RCT
 
 ![Trainer battle](docs/images/trainer_battle.png)
-
-#### Pokémons Alpha
-
-![Alpha Battle](docs/images/alpha.png)
 
 #### Integração com WildBosses
 
@@ -1705,44 +1662,15 @@ champion
 rival
 ```
 
-### Disponibilidade do código e permissão de uso
+### Licença e uso
 
-O código-fonte do Battle Introduction fica disponível publicamente para transparência, análise, aprendizado, diagnóstico de problemas, desenvolvimento privado e contribuições.
+Cobblemon Battle Introduction é distribuído sob **All Rights Reserved (ARR)**.
 
-Ter acesso público ao código **não** concede automaticamente permissão para redistribuir, publicar, disponibilizar ou operar o Battle Introduction publicamente.
+O mod original e sem modificações pode ser usado em servidores Minecraft públicos ou privados e pode ser incluído e redistribuído como parte de modpacks públicos ou privados. Donos de servidores e autores de modpacks não precisam solicitar autorização separada para esses usos.
 
-#### Permissão obrigatória
+Reuploads ou mirrors independentes não são permitidos. Copiar, reutilizar, adaptar ou incorporar o código-fonte, assets, texturas, artwork ou outro conteúdo do projeto em outro projeto não é permitido sem autorização prévia por escrito. A distribuição pública de versões modificadas, forks, trabalhos derivados ou binários alterados também exige autorização prévia por escrito.
 
-**É necessária autorização prévia por escrito para todo modpack público e todo servidor multiplayer público que utilizar o Battle Introduction.**
-
-Também é necessária autorização prévia de **Kaizzinho** para:
-
-- inclusão em launcher público, client pack público, server pack público ou outro pacote distribuído publicamente;
-- redistribuição ou mirror do JAR oficial fora de uma distribuição autorizada;
-- distribuição pública de builds compiladas a partir do código-fonte;
-- distribuição ou uso público de versões modificadas, forks ou trabalhos derivados;
-- distribuição ou uso público comercial, monetizado, patrocinado ou pago.
-
-A permissão é concedida por projeto. A autorização para um modpack, servidor, fork, launcher ou distribuição não autoriza automaticamente outro.
-
-#### Permitido sem autorização separada
-
-Você pode:
-
-- visualizar e estudar o código-fonte público;
-- clonar ou criar fork do repositório para análise, aprendizado, desenvolvimento privado, testes ou contribuição quando a plataforma permitir;
-- modificar e compilar o código de forma privada para desenvolvimento ou testes pessoais;
-- abrir issues e enviar pull requests;
-- usar a versão oficial sem modificações em sua própria instalação singleplayer pessoal;
-- usar o Battle Introduction em um modpack realmente privado ou servidor multiplayer privado para um grupo fechado, desde que não seja anunciado publicamente, distribuído publicamente, vendido ou monetizado.
-
-Um fork público ou uma cópia visível do repositório não concede por si só permissão para distribuir builds ou disponibilizar o mod publicamente.
-
-Se um modpack ou servidor privado se tornar público depois, a autorização deve ser obtida **antes** do início desse uso público.
-
-Consulte [LICENSE](LICENSE) para os termos completos.
-
-> **Nota:** como a distribuição e o uso público exigem autorização, o Battle Introduction é um projeto de código-fonte disponível e não software open source aprovado pela OSI.
+Os avisos de copyright, atribuição e o texto da licença devem permanecer intactos. Todos os direitos não concedidos expressamente permanecem reservados. Consulte [LICENSE](LICENSE) para os termos completos.
 
 ### Instalação
 
@@ -1836,15 +1764,9 @@ Para validar uma release, teste o JAR em uma instância limpa e depois no modpac
 
 ### Licença e termos de uso
 
-O Battle Introduction é distribuído sob a **Battle Introduction Source-Available Permission License 1.0**.
+Cobblemon Battle Introduction é distribuído sob **All Rights Reserved (ARR)**. O mod original e sem modificações pode ser usado em servidores públicos ou privados e redistribuído como parte de modpacks públicos ou privados sem autorização separada.
 
-O código-fonte fica visível publicamente para aprendizado, análise, desenvolvimento privado e contribuições.
-
-**É necessária autorização prévia por escrito para todo modpack público e todo servidor multiplayer público que utilizar o Battle Introduction.**
-
-Redistribuição pública, builds públicas compiladas a partir do código, versões modificadas ou derivadas públicas, mirrors, pacotes de launcher e uso público comercial também exigem autorização prévia de **Kaizzinho**.
-
-Uso pessoal em singleplayer e modpacks ou servidores realmente privados e não públicos são permitidos nas condições descritas na licença.
+Reuploads ou mirrors independentes não são permitidos. Reutilização do código-fonte ou dos assets do projeto, assim como distribuição pública de versões modificadas, forks, trabalhos derivados ou binários alterados, exige autorização prévia por escrito de **Kaizzinho**. Os avisos de copyright, atribuição e o texto da licença devem permanecer intactos.
 
 Consulte [LICENSE](LICENSE) para os termos completos.
 
