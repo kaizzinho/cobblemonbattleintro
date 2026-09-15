@@ -11,6 +11,7 @@
     "BattleReplacePokemonHandlerMixin",
     "BattleMakeChoiceHandlerMixin",
     "BattleChallengeNotificationHandlerMixin",
+    "BattleMessageHandlerMixin",
     "SpawnExtraDataEntityHandlerMixin",
     "KeyboardMixin",
     "InGameHudMixin",
