@@ -4,3 +4,21 @@ run/
 *.jar
 
 !gradle/wrapper/gradle-wrapper.jar
+
+# local build environment
+.idea/
+
+# local dependencies
+libs/
+
+# gradle build setup
+gradle/
+gradlew
+gradlew.bat
+build.gradle.kts
+settings.gradle.kts
+gradle.properties
+
+# github actions
+.github/workflows/
+
