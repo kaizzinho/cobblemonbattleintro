@@ -1,8 +1,8 @@
 # Cobblemon Battle Introduction ⚔️
 
-![Release](https://img.shields.io/badge/release-1.0-2EA44F)
+![Version](https://img.shields.io/badge/version-1.0-blue)
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-62B47A?logo=minecraft&logoColor=white)
-![Fabric](https://img.shields.io/badge/Fabric-0.17.2%2B-DBB69B?logo=minecraft&logoColor=white)
+![Fabric](https://img.shields.io/badge/Fabric-Loader%200.17.2%2B-DBB69B?logo=minecraft&logoColor=white)
 ![Kotlin](https://img.shields.io/badge/Kotlin-Fabric%20Language%20Kotlin-7F52FF?logo=kotlin&logoColor=white)
 ![Cobblemon](https://img.shields.io/badge/Cobblemon-1.8.1-3E8E41)
 ![License](https://img.shields.io/badge/license-All%20Rights%20Reserved-red)
@@ -147,13 +147,8 @@ The global **Animation Speed** setting scales the visual stages while the hold d
 
 ![Trainer battle](docs/images/trainer_battle.png)
 
-#### WildBosses
-
-![WildBoss encounter](docs/images/wildbosses.png)
-
-#### Cobblemon Raid Dens
-
-![Raid Battle](docs/images/raid.png)
+#### Alpha encounters
+![Alpha battle](docs/images/alpha.png)
 
 #### Legendary and Mythical encounters
 
@@ -163,9 +158,17 @@ The global **Animation Speed** setting scales the visual stages while the hold d
 
 ![2D sprite portrait](docs/images/2d_sprites.png)
 
-#### In-game configuration
+#### In-game configuration with ModMenu
 
 ![Mod Menu configuration](docs/images/modmenu.png)
+
+#### WildBosses
+
+![WildBoss encounter](docs/images/wildbosses.png)
+
+#### Cobblemon Raid Dens
+
+![Raid Battle](docs/images/raid.png)
 
 
 ### Requirements
@@ -1023,13 +1026,8 @@ A opção **Velocidade da animação** escala os estágios visuais enquanto o te
 
 ![Trainer battle](docs/images/trainer_battle.png)
 
-#### Integração com WildBosses
-
-![WildBoss encounter](docs/images/wildbosses.png)
-
-#### Cobblemon Raid Dens
-
-![Raid Battle](docs/images/raid.png)
+#### Encontros contra pokémon Alpha
+![Alpha battle](docs/images/alpha.png)
 
 #### Encontros de pokémon lendário/mítico
 
@@ -1042,6 +1040,14 @@ A opção **Velocidade da animação** escala os estágios visuais enquanto o te
 #### Integração com ModMenu
 
 ![Mod Menu configuration](docs/images/modmenu.png)
+
+#### Integração com WildBosses
+
+![WildBoss encounter](docs/images/wildbosses.png)
+
+#### Cobblemon Raid Dens
+
+![Raid Battle](docs/images/raid.png)
 
 ### Requisitos
 

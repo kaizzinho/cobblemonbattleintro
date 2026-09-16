@@ -85,7 +85,7 @@ object BattleIntroductionConfig {
             fun from(value: String?): ParticleDensity =
                 entries.firstOrNull {
                     it.configValue == BattleIntroductionConfig.normalizeChoice(value)
-                } ?: NORMAL
+                } ?: LOW
         }
     }
 
@@ -143,7 +143,7 @@ object BattleIntroductionConfig {
         var animationSpeed: String = AnimationSpeed.NORMAL.configValue,
         var flashIntensity: String = FlashIntensity.NORMAL.configValue,
         var holdDurationMs: Int = 1300,
-        var particleDensity: String = ParticleDensity.NORMAL.configValue,
+        var particleDensity: String = ParticleDensity.LOW.configValue,
         var trainerPortraitMode: String =
             TrainerPortraitMode.THREE_D_PREFERRED.configValue,
         var pokemonPortraitMode: String =
