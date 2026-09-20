@@ -9,6 +9,9 @@
 
 *Read this in [English](#english) | Leia em [Português](#português)*
 
+
+*If you're here for the resource pack, click [here](#sprites-resource-pack)*|
+*Se você está aqui pelo resource pack, clique [aqui](#resource-pack-com-sprites-2d)*
 ---
 
 ## English
@@ -513,13 +516,8 @@ The 2D renderer scans the PNG's transparent/opaque bounds once, caches the resul
 
 If both 3D and 2D rendering fail, the intro continues with no Pokémon portrait.
 
-#### Sprite artwork distribution
-
-Battle Introduction itself does not need to bundle Pokémon sprite artwork.
-
-This allows the mod JAR to contain the rendering support while sprite artwork can be provided independently through a normal Minecraft resource pack.
-
-Resource-pack creators are responsible for the rights and distribution terms of any artwork they include.
+#### Sprites Resource Pack
+[Click here to download the resource pack with 2d sprites fallback](https://mega.nz/file/nGp3USTJ#kBgc7u5WxgMWMD7E3xxRE-xGERsLtUZJiyHvG0fC2k8)
 
 ### Radical Cobblemon Trainers integration
 
@@ -1389,13 +1387,8 @@ O renderer 2D lê os limites transparentes/opacos do PNG uma vez, mantém o resu
 
 Se 3D e 2D falharem, a intro continua sem retrato.
 
-#### Distribuição dos sprites
-
-O Battle Introduction não precisa incluir artwork de Pokémon dentro do JAR.
-
-O mod pode distribuir apenas o suporte de renderização enquanto os sprites são fornecidos separadamente por um resource pack normal.
-
-Quem cria ou distribui o resource pack é responsável pelos direitos e termos de uso das imagens incluídas.
+#### Resource pack com Sprites 2D
+[Clique aqui para baixar o ResourcePack com os Sprites 2D para os pokémons](https://mega.nz/file/nGp3USTJ#kBgc7u5WxgMWMD7E3xxRE-xGERsLtUZJiyHvG0fC2k8)
 
 ### Integração com Radical Cobblemon Trainers
 
