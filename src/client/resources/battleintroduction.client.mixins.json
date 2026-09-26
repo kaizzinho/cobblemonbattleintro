@@ -13,6 +13,7 @@
     "BattleChallengeNotificationHandlerMixin",
     "BattleMessageHandlerMixin",
     "SpawnExtraDataEntityHandlerMixin",
+    "PartySendBindingMixin",
     "KeyboardMixin",
     "InGameHudMixin",
     "BattleExtrasScreenRenderMixin",

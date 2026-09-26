@@ -42,6 +42,7 @@ object BattleIntroOverlay {
     private var progress = 0f
     private var lastTimeMs = 0L
     private var isFlushing = false
+    private var manualSendOutLocked = false
 
 
     private const val BASE_FLICKER_TOTAL_MS      = 2250L
@@ -643,6 +644,7 @@ object BattleIntroOverlay {
         progress = 0f
         lastTimeMs = 0L
         state = State.FLICKER
+        manualSendOutLocked = true
 
         debugLog(
             "[t+0ms] INTRO START | source={} localParty={} opponentParty={} state={}",
@@ -1668,6 +1670,10 @@ object BattleIntroOverlay {
         isAnimating()
 
 
+    fun isManualSendOutLocked(): Boolean =
+        manualSendOutLocked
+
+
     fun canSkip(): Boolean =
         (
             isOpponentPlayer ||
@@ -1794,9 +1800,11 @@ object BattleIntroOverlay {
             )
             afterOnClient(PLAYER_STAGGER_DELAY_S) {
                 replayQueue("PLAYER", playerBatch)
+                manualSendOutLocked = false
             }
         } else {
             LOGGER.warn("[t+{}ms] PLAYER batch is empty", elapsedDebugMs())
+            manualSendOutLocked = false
         }
 
         localSkinId = null

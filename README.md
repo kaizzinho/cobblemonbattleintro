@@ -654,7 +654,7 @@ Advanced
 | Animation Speed | Slow / Normal / Fast / Very Fast | Normal |
 | Flash Intensity | Off / Reduced / Normal | Normal |
 | VS Hold Duration | 0.25 / 0.5 / 0.8 / 1 / 1.3 / 1.6 / 2 / 2.5 s | 1.3 s |
-| Bar Particles | Off / Low / Normal / High | Normal |
+| Bar Particles | Off / Low / Normal / High | Low |
 
 Animation speed multipliers:
 
@@ -731,7 +731,7 @@ Current default values:
   "animationSpeed": "normal",
   "flashIntensity": "normal",
   "holdDurationMs": 1300,
-  "particleDensity": "normal",
+  "particleDensity": "low",
   "trainerPortraitMode": "3d_preferred",
   "pokemonPortraitMode": "automatic",
   "uiTransitionSounds": true,
@@ -1523,7 +1523,7 @@ Advanced
 | Animation Speed | Slow / Normal / Fast / Very Fast | Normal |
 | Flash Intensity | Off / Reduced / Normal | Normal |
 | VS Hold Duration | 0.25 / 0.5 / 0.8 / 1 / 1.3 / 1.6 / 2 / 2.5 s | 1.3 s |
-| Bar Particles | Off / Low / Normal / High | Normal |
+| Bar Particles | Off / Low / Normal / High | Low |
 
 Multiplicadores:
 
@@ -1594,7 +1594,7 @@ Valores padrão atuais:
   "animationSpeed": "normal",
   "flashIntensity": "normal",
   "holdDurationMs": 1300,
-  "particleDensity": "normal",
+  "particleDensity": "low",
   "trainerPortraitMode": "3d_preferred",
   "pokemonPortraitMode": "automatic",
   "uiTransitionSounds": true,
