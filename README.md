@@ -4,7 +4,7 @@
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-62B47A?logo=minecraft&logoColor=white)
 ![Fabric](https://img.shields.io/badge/Fabric-Loader%200.17.2%2B-DBB69B?logo=minecraft&logoColor=white)
 ![Kotlin](https://img.shields.io/badge/Kotlin-Fabric%20Language%20Kotlin-7F52FF?logo=kotlin&logoColor=white)
-![Cobblemon](https://img.shields.io/badge/Cobblemon-1.8.2-3E8E41)
+![Cobblemon](https://img.shields.io/badge/Cobblemon-1.8.4-3E8E41)
 ![License](https://img.shields.io/badge/license-All%20Rights%20Reserved-red)
 
 *Read this in [English](#english) | Leia em [Português](#português)*
@@ -182,7 +182,7 @@ The global **Animation Speed** setting scales the visual stages while the hold d
 - Fabric Loader `0.17.2+`
 - Fabric API
 - Fabric Language Kotlin
-- Cobblemon `1.8.2`
+- Cobblemon `1.8.4`
 - Java `21`
 
 #### Optional integrations
@@ -805,7 +805,7 @@ Copyright notices, attribution, and the license text must remain intact. All rig
 1. Install Fabric Loader for Minecraft `1.21.1`.
 2. Install Fabric API.
 3. Install Fabric Language Kotlin.
-4. Install Cobblemon `1.8.2`.
+4. Install Cobblemon `1.8.4`.
 5. Place the Battle Introduction `.jar` in `mods`.
 6. Launch the game.
 
@@ -827,7 +827,7 @@ Current target:
 |---|---|
 | Minecraft | `1.21.1` |
 | Fabric Loader | `0.17.2+` |
-| Cobblemon | `1.8.2` |
+| Cobblemon | `1.8.4` |
 | RCT (optional) | `0.19.0-beta` |
 | RCT API (optional) | `0.16.0-beta` |
 | Java | `21` |
@@ -847,7 +847,7 @@ The public GitHub repository is maintained as a **portfolio and source reference
 
 Because of that, a fresh clone is **not guaranteed to be directly buildable**. End users should install the compiled release JAR instead of rebuilding the project from the public repository.
 
-Release `1.0` targets Minecraft `1.21.1`, Cobblemon `1.8.2`, Fabric Loader `0.17.2+`, and Java `21`. The release artifact is named:
+Release `1.0` targets Minecraft `1.21.1`, Cobblemon `1.8.4`, Fabric Loader `0.17.2+`, and Java `21`. The release artifact is named:
 
 ```text
 cobblemon-battle-introduction-1.0.jar
@@ -857,7 +857,7 @@ The source remains visible for review under the project's **All Rights Reserved 
 
 ### Known Limitations
 
-- The current release target is Minecraft `1.21.1` with Cobblemon `1.8.2`.
+- The current release target is Minecraft `1.21.1` with Cobblemon `1.8.4`.
 - Compatibility with future Cobblemon/RCT/WildBosses internals may require updates.
 - Custom trainer models that are not player-like may use the 2D trainer fallback or no portrait depending on the selected mode.
 - Alternate Pokémon forms currently use the real form in 3D, but the generic 2D fallback resolves by base National Dex number.
@@ -1055,7 +1055,7 @@ A opção **Velocidade da animação** escala os estágios visuais enquanto o te
 - Fabric Loader `0.17.2+`
 - Fabric API
 - Fabric Language Kotlin
-- Cobblemon `1.8.2`
+- Cobblemon `1.8.4`
 - Java `21`
 
 #### Integrações opcionais
@@ -1666,7 +1666,7 @@ Os avisos de copyright, atribuição e o texto da licença devem permanecer inta
 1. Instale Fabric Loader para Minecraft `1.21.1`.
 2. Instale Fabric API.
 3. Instale Fabric Language Kotlin.
-4. Instale Cobblemon `1.8.2`.
+4. Instale Cobblemon `1.8.4`.
 5. Coloque o `.jar` do Battle Introduction em `mods`.
 6. Inicie o jogo.
 
@@ -1688,7 +1688,7 @@ Target atual:
 |---|---|
 | Minecraft | `1.21.1` |
 | Fabric Loader | `0.17.2+` |
-| Cobblemon | `1.8.2` |
+| Cobblemon | `1.8.4` |
 | RCT (opcional) | `0.19.0-beta` |
 | RCT API (opcional) | `0.16.0-beta` |
 | Java | `21` |
@@ -1708,7 +1708,7 @@ O repositório público no GitHub é mantido como **portfólio e referência do 
 
 Por isso, um clone novo **não tem garantia de compilar diretamente**. Usuários finais devem instalar o JAR compilado da release em vez de reconstruir o projeto a partir do repositório público.
 
-A release `1.0` tem como target Minecraft `1.21.1`, Cobblemon `1.8.2`, Fabric Loader `0.17.2+` e Java `21`. O artefato da release usa o nome:
+A release `1.0` tem como target Minecraft `1.21.1`, Cobblemon `1.8.4`, Fabric Loader `0.17.2+` e Java `21`. O artefato da release usa o nome:
 
 ```text
 cobblemon-battle-introduction-1.0.jar
@@ -1718,7 +1718,7 @@ O código permanece visível para consulta sob a licença **All Rights Reserved 
 
 ### Limitações conhecidas
 
-- O target atual é Minecraft `1.21.1` com Cobblemon `1.8.2`.
+- O target atual é Minecraft `1.21.1` com Cobblemon `1.8.4`.
 - Atualizações futuras do Cobblemon, RCT ou WildBosses podem exigir ajustes.
 - Modelos customizados de NPC que não sejam player-like podem usar fallback 2D ou nenhum retrato conforme a opção escolhida.
 - Formas alternativas usam a forma real no 3D, mas o fallback 2D genérico resolve pela espécie base do National Dex.
